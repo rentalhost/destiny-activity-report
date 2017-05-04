@@ -1,0 +1,12 @@
+.Input {
+    border: 1px solid #E8E8E8;
+    border-bottom-color: #DADADA;
+    border-radius: 3px;
+    padding: 5px 10px;
+
+    &[disabled] {
+        border-color: #EAEAEA;
+        background: #FDFDFD;
+        color: #717171;
+    }
+}

@@ -1,0 +1,34 @@
+@import "Input";
+
+.Button {
+    $backgroundTop: white;
+    $backgroundBottom: #F7F7F7;
+    $borderColor: #C5C5C5;
+    background: linear-gradient(to bottom, $backgroundTop 0%, $backgroundBottom 100%);
+    border: 1px $borderColor solid;
+    border-radius: 3px;
+    padding: 5px 10px;
+
+    &[disabled] {
+        background: linear-gradient(to bottom, desaturate($backgroundTop, 100%) 0%, desaturate($backgroundBottom, 100%) 100%);
+        border-color: #EAEAEA;
+        color: #D6D6D6;
+    }
+
+    &:not([disabled]) {
+        cursor: pointer;
+        outline: none;
+
+        &:hover {
+            $darkenAmount: 2%;
+            background: linear-gradient(to bottom, darken($backgroundTop, $darkenAmount) 0%, darken($backgroundBottom, $darkenAmount) 100%);
+            border-color: darken($borderColor, $darkenAmount + 5);
+        }
+
+        &:active {
+            $lightenAmount: 2%;
+            background: linear-gradient(to bottom, lighten($backgroundTop, $lightenAmount) 0%, lighten($backgroundBottom, $lightenAmount) 100%);
+            border-color: lighten($borderColor, $lightenAmount * 5);
+        }
+    }
+}

@@ -1,0 +1,10 @@
+.Boxes {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -5px;
+    overflow: hidden;
+
+    > .break {
+        width: 100%;
+    }
+}

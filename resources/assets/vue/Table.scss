@@ -1,0 +1,17 @@
+.Table {
+    width: 100%;
+    border-spacing: 0;
+    border: 1px #E8E8E8 solid;
+    border-radius: 3px;
+    margin: 25px 0;
+
+    th {
+        font-weight: normal;
+        text-align: left;
+    }
+
+    th,
+    td {
+        padding: 5px 10px;
+    }
+}

@@ -1,0 +1,14 @@
+body {
+    cursor: default;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+h1.baseTitle {
+    font-size: 1.5em;
+    margin: 2em 0 1em;
+    padding: 0 5px 0.25em;
+    border-bottom: 2px whitesmoke solid;
+}

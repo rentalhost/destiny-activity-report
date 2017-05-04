@@ -1,0 +1,120 @@
+.ClanList {
+    + .ClanList {
+        margin-top: -15px;
+    }
+
+    thead tr.clan th {
+        background-color: #F9F9F9;
+        font-size: 1.25em;
+        padding: 7px 10px;
+
+        strong {
+            font-weight: 500;
+        }
+
+        em {
+            font-weight: 300;
+            float: right;
+            color: #AAAAAA;
+        }
+
+        i.loading {
+            color: #4E61A7;
+            float: right;
+            margin-right: 10px;
+        }
+
+        i.primary, i.all { color: #4E61A7; }
+        i.ally { color: #C52424; }
+    }
+
+    thead tr.header th {
+        background-color: #F9F9F9;
+        border-bottom: 2px #E8E8E8 solid;
+        font-size: 0.8em;
+        font-weight: 500;
+
+        &:not(:first-child) {
+            text-align: right;
+        }
+
+        &.sortable {
+            cursor: pointer;
+
+            &.active:before {
+                content: '\F107';
+                font-family: FontAwesome;
+                margin-right: 5px;
+            }
+
+            &:hover {
+                background-color: #F1F1F1;
+            }
+
+            &.active > span,
+            &:hover > span {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    tbody .founder { color: #F75200; }
+    tbody .administrator { color: #F78B00; }
+
+    tbody tr.hoverable:hover {
+        background-color: #FFFFDA;
+    }
+
+    tbody tr.loading {
+        background-color: #FAFCFF;
+    }
+
+    tbody tr.noMembers {
+        background-color: #FFF6F6;
+        color: #E60000;
+        text-align: center;
+
+        > td {
+            padding: 12px 0 10px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+    }
+
+    tbody tr:first-child td {
+        border-top: 2px white solid;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: 2px white solid;
+    }
+
+    tbody td.activity {
+        text-align: right;
+        font-size: 0.8em;
+
+        > div { font-weight: 500; }
+        > .veryHigh { color: #458E00; }
+        > .high { color: #51C000; }
+        > .medium { color: #F19200; }
+        > .low { color: #F33912; }
+        > .veryLow { color: #B3290C; }
+        > .noData { color: silver; font-weight: normal; }
+    }
+
+    tbody td.index {
+        text-align: right;
+        font-weight: bold;
+        font-size: 0.8em;
+
+        &:after {
+            content: 'º';
+            margin-left: 2px;
+        }
+    }
+
+    tbody td.loading {
+        color: #4C4C6B;
+        text-align: center;
+    }
+}

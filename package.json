@@ -11,6 +11,8 @@
         "bootstrap-sass": "3.*",
         "jquery": "3.*",
         "lodash": "4.*",
-        "vue": "^2.*"
+        "vue": "^2.*",
+        "moment": "^2.18.1",
+        "normalize-scss": "6.*"
     }
 }

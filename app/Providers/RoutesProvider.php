@@ -2,6 +2,8 @@
 
 namespace Application\Providers;
 
+use Application\Controllers\HomeController;
+use Application\Controllers\ProcessController;
 use Closure;
 use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
 use Illuminate\Routing\RouteRegistrar;
@@ -17,13 +19,15 @@ class RoutesProvider extends ServiceProvider
      * In addition, it is set as the URL generator's root namespace.
      * @var string
      */
-    protected $namespace = 'Application\Controllers';
+    protected $namespace = '\Application\Controllers';
 
     /**
      * Contains the routes for the application.
      */
     private static function routes(): void
     {
+        HomeController::routerSetup();
+        ProcessController::routerSetup();
     }
 
     /**
