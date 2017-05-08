@@ -1,6 +1,7 @@
 import EventBus from "../modules/EventBus";
 import $ from "jquery";
 import _ from "lodash";
+import Query from "../modules/Query";
 
 const mReadingMessage     = 'Reading <strong>clan signature</strong>%s...',
       mClanPrimaryMessage = 'Primary clan: <strong>%s</strong> <em>#%u</em>.',
@@ -11,6 +12,10 @@ const Process = {
     init: function () {
         EventBus.$on('Process:clan', Process.clan);
         EventBus.$emit('Message:push', 'Enter the <strong>clan name</strong> or <strong>gamertag</strong> then click <strong>process</strong>.', { temporary: true });
+
+        if (Query.get('clan')) {
+            Process.clan();
+        }
     },
     checkError: function (response, detailsConditional, details) {
         if (response.success === false) {

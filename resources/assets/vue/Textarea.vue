@@ -3,9 +3,19 @@
 </template>
 
 <script>
+    import Query from '../modules/Query';
+
     export default {
         props: {
-            expansible: { type: Boolean }
+            expansible: Boolean,
+            query: String
+        },
+        mounted(){
+            const queryValue = Query.get(this.$props['query']);
+
+            if (queryValue) {
+                this.$el.value = queryValue;
+            }
         }
     }
 </script>

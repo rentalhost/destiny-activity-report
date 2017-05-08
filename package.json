@@ -14,5 +14,8 @@
         "vue": "^2.*",
         "moment": "^2.18.1",
         "normalize-scss": "6.*"
+    },
+    "dependencies": {
+        "querystring": "^0.2.0"
     }
 }

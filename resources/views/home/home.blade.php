@@ -16,10 +16,10 @@
 
             <my-boxes>
                 <my-box width="20%" label="Clan name:">
-                    <my-input ref="self" type="text" class="clanMaster processComponents"></my-input>
+                    <my-input ref="self" type="text" class="clanMaster processComponents" query="clan"></my-input>
                 </my-box>
                 <my-box width="20%" label="Clan allies:">
-                    <my-textarea class="clanAllies processComponents" expansible></my-textarea>
+                    <my-textarea class="clanAllies processComponents" expansible query="allies"></my-textarea>
                 </my-box>
                 <my-box width="10%">
                     <my-button ref="self" class="processComponents" @click.native="$refs.self.action('Process:clan')">Process</my-button>
