@@ -16,10 +16,22 @@
         &.sortable {
             cursor: pointer;
 
-            &.active:before {
+            &.left {
+                text-align: left;
+            }
+
+            &:not(.left).active:before,
+            &.left.active:after {
                 content: '\F107';
                 font-family: FontAwesome;
+            }
+
+            &:not(.left).active:before {
                 margin-right: 5px;
+            }
+
+            &.left.active:after {
+                margin-left: 5px;
             }
 
             &:hover {

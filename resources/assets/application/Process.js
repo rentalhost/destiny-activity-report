@@ -128,6 +128,8 @@ const Process = {
                 return;
             }
 
+            EventBus.$emit('ClanList:beforeActivities');
+
             //noinspection JSCheckFunctionSignatures
             const memberIds           = _.chain(members).flatMap().map('membershipId').value();
             let loadActivitiesPromise = Process.loadActivities(memberIds);

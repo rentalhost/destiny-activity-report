@@ -25,7 +25,10 @@
                 </tr>
                 <tr class="header" v-if="!clan.loading && clan.hasMembers">
                     <th>Ranking</th>
-                    <th>Gamertag</th>
+                    <th class="sortable left"
+                        :class="{ active: ordering === 'default' }"
+                        @click="setOrdering($event, 'default')">Gamertag
+                    </th>
                     <th class="sortable" title="Activities independent of clan."
                         :class="{ active: ordering === 'general' }"
                         @click="setOrdering($event, 'general')"><span>General</span></th>
@@ -89,6 +92,7 @@
     import $ from 'jquery';
     import Vue from 'vue';
     import LoadingStatus from '../enums/LoadingStatus';
+    import Query from '../modules/Query';
 
     const ClanList = {
         data(){
@@ -104,7 +108,7 @@
                 },
                 clans: {},
                 clanNames: {},
-                ordering: 'raid',
+                ordering: 'default',
                 textMode: true,
                 groupByAll: false,
                 clansOriginal: null,
@@ -185,7 +189,7 @@
             sortMembers(membersToSort){
                 const ordering = this.$data['ordering'];
 
-                return _.chain(membersToSort).orderBy(function (clanMember) {
+                let memberOrdering = _.chain(membersToSort).orderBy(function (clanMember) {
                     return clanMember['membershipDisplayName'];
                 }).orderBy(function (clanMember) {
                     return clanMember['isAdmin'];
@@ -195,11 +199,17 @@
                     return clanMember['forceLoading'];
                 }, 'desc').orderBy(function (clanMember) {
                     return clanMember['loadingStatus'] === LoadingStatus.LOADING;
-                }, 'desc').orderBy(function (clanMember) {
-                    return !_.isEmpty(clanMember['activities'])
-                        ? clanMember['activities'][ordering]['score']
-                        : -Infinity;
-                }, 'desc').keyBy('membershipId').value();
+                }, 'desc');
+
+                if (ordering !== 'default') {
+                    memberOrdering = memberOrdering.orderBy(function (clanMember) {
+                        return !_.isEmpty(clanMember['activities'])
+                            ? clanMember['activities'][ordering]['score']
+                            : -Infinity;
+                    }, 'desc')
+                }
+
+                return memberOrdering.keyBy('membershipId').value();
             },
             setOrdering(ev, orderingMode){
                 $(ev.currentTarget).addClass('active')
@@ -256,6 +266,11 @@
                 this.$data['clans'][this.getClanId(clanId)]['members'][memberId].activities    = memberActivities;
                 this.updateOrdering();
             },
+            beforeActivities(){
+                if (Query.get('group') === 'all') {
+                    this.toggleGroupMode();
+                }
+            },
             loaded(clanId) {
                 this.$data['clans'][this.getClanId(clanId)]['loading'] = false;
             }
@@ -269,6 +284,7 @@
             EventBus.$on('ClanList:setMemberActivities', this.setMemberActivities.bind(this));
             EventBus.$on('ClanList:getNextMember', (callback) => callback(this.getNextMember()));
             EventBus.$on('ClanList:loaded', this.loaded.bind(this));
+            EventBus.$on('ClanList:beforeActivities', this.beforeActivities.bind(this));
         }
     };
 
