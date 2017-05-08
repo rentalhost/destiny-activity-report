@@ -11,7 +11,7 @@
                 <col width="15%" />
             </colgroup>
             <thead>
-                <tr class="clan">
+                <tr class="details">
                     <th colspan="7">
                         <em v-if="clan.clanId">#{{ clan.clanId }}</em>
                         <i class="fa fa-fw fa-spinner fa-pulse loading" v-if="clan.loading"></i>
@@ -44,7 +44,7 @@
                 </tr>
             </thead>
             <tbody v-if="!clan.loading && !clan.hasMembers">
-                <tr class="noMembers">
+                <tr class="none">
                     <td>No members on this clan.</td>
                 </tr>
             </tbody>
@@ -68,6 +68,9 @@
                             :class="gameScoreKey" :title="textMode ? scorePercentual(activity.score) : null">
                             <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
                             <span v-if="textMode" v-text="gameScore.text"></span>
+                            <i v-if="gameScore.details && activityKey !== 'general'"
+                                class="fa fa-fw fa-info-circle moreInfo" title="Click to see all details."
+                                @click.stop="getAccountDetails(member, activityKey)"></i>
                         </div>
                     </td>
                 </tr>
@@ -81,16 +84,12 @@
     import _ from 'lodash';
     import $ from 'jquery';
     import Vue from 'vue';
-
-    const LoadingStatus = {
-        IDLE: 0,
-        LOADING: 1,
-        LOADED: 2
-    };
+    import LoadingStatus from '../enums/LoadingStatus';
 
     const ClanList = {
         data(){
             return {
+                LoadingStatus: LoadingStatus,
                 gameScores: {
                     veryHigh: { inclusive: true, min: 73.9, max: 100, details: true, text: 'Very High' },
                     high: { inclusive: false, min: 50.1, max: 73.9, details: true, text: 'High' },
@@ -105,7 +104,6 @@
                 textMode: true,
                 groupByAll: false,
                 clansOriginal: null,
-                LoadingStatus: LoadingStatus,
             };
         },
         methods: {
@@ -166,6 +164,9 @@
                     return clanMember.loadingStatus === LoadingStatus.IDLE;
                 });
             },
+            getAccountDetails(member, gameMode){
+                EventBus.$emit('ClanAccount:getDetails', member, gameMode);
+            },
             updateOrdering(){
                 _.each(this.$data['clans'], (clanDetails) => clanDetails['members'] = this.sortMembers(clanDetails['members']));
             },
@@ -207,8 +208,14 @@
                     members: {}
                 });
             },
-            getMembers(){
-                return _.assignIn({}, ... _.map(this.$data['clans'], 'members'));
+            getMembers(callback){
+                const members = _.assignIn({}, ... _.map(this.$data['clans'], 'members'));
+
+                if (callback) {
+                    callback(members);
+                }
+
+                return members;
             },
             setMembers(clanId, clanMembers){
                 const clanIdNow = this.getClanId(clanId);
@@ -242,6 +249,7 @@
             EventBus.$on('Process:clear', this.clear.bind(this));
             EventBus.$on('ClanList:createClan', this.createClan.bind(this));
             EventBus.$on('ClanList:setMembers', this.setMembers.bind(this));
+            EventBus.$on('ClanList:getMembers', this.getMembers.bind(this));
             EventBus.$on('ClanList:setMemberLoading', this.setMemberLoading.bind(this));
             EventBus.$on('ClanList:setMemberActivities', this.setMemberActivities.bind(this));
             EventBus.$on('ClanList:getNextMember', (callback) => callback(this.getNextMember()));

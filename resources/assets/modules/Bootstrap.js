@@ -1,9 +1,6 @@
 import _ from "lodash";
 import Vue from "vue";
-import moment from "moment";
 import $ from "jquery";
-
-moment.locale('pt-BR');
 
 require('./FormController');
 
@@ -12,6 +9,7 @@ _.each([
     'Boxes',
     'Box',
     'Button',
+    'ClanAccount',
     'ClanList',
     'Clock',
     'Input',

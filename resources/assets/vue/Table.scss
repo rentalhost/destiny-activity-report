@@ -5,6 +5,59 @@
     border-radius: 3px;
     margin: 25px 0;
 
+    thead tr.details th {
+        background-color: #F9F9F9;
+        font-size: 1.25em;
+        padding: 7px 10px;
+
+        strong {
+            font-weight: 500;
+        }
+
+        em {
+            font-weight: 300;
+            float: right;
+            color: #AAAAAA;
+        }
+
+        i.loading {
+            color: #4E61A7;
+            float: right;
+            margin-right: 10px;
+        }
+    }
+
+    thead tr.header th {
+        background-color: #F9F9F9;
+        border-bottom: 2px #E8E8E8 solid;
+        font-size: 0.8em;
+        font-weight: 500;
+    }
+
+    tbody tr.hoverable:hover {
+        background-color: #FFFFDA;
+    }
+
+    tbody tr.none {
+        background-color: #FFF6F6;
+        color: #E60000;
+        text-align: center;
+
+        > td {
+            padding: 12px 0 10px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+    }
+
+    tbody tr:first-child td {
+        border-top: 2px white solid;
+    }
+
+    tbody tr:last-child td {
+        border-bottom: 2px white solid;
+    }
+
     th {
         font-weight: normal;
         text-align: left;

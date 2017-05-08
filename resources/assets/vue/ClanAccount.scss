@@ -1,0 +1,67 @@
+.ClanAccount {
+    thead tr.header {
+        > th:nth-child(4),
+        > th:nth-child(5),
+        > th:nth-child(6) {
+            text-align: center;
+        }
+    }
+
+    thead tr.details .user { color: #4E61A7; }
+    thead tr.details .gameMode { color: rgba(0, 0, 0, 0.3); }
+
+    tbody td.when { font-size: 0.8em; }
+
+    tbody tr.activity {
+        td.title { font-weight: 500; }
+
+        > td:nth-child(4),
+        > td:nth-child(5),
+        > td:nth-child(6) {
+            text-align: right;
+        }
+    }
+
+    tbody td.players {
+        > .you { color: #4E61A7; }
+        > .ally { color: #C52424; }
+        > .external { color: rgba(0, 0, 0, 0.4); }
+        > .unconsidered { color: rgba(0, 0, 0, 0.15); }
+    }
+
+    tbody tr.header {
+        > th:nth-child(4),
+        > th:nth-child(5),
+        > th:nth-child(6) {
+            text-align: right;
+        }
+    }
+
+    tfoot {
+        td {
+            &:nth-child(2),
+            &:nth-child(3),
+            &:nth-child(4) {
+                text-align: right;
+            }
+
+            &.total{
+                text-align: right;
+            }
+
+            background-color: #F9F9F9;
+            border-top: 2px #E8E8E8 solid;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+    }
+
+    [data-max] {
+        font-size: 0.8em;
+
+        &:after {
+            content: ' / ' attr(data-max);
+            color: #D6D6D6;
+        }
+    }
+}

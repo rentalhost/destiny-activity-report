@@ -31,6 +31,7 @@
                 </my-box>
             </my-boxes>
 
+            <my-clan-account></my-clan-account>
             <my-clan-list></my-clan-list>
 
             <p style="margin-top: 15px;">

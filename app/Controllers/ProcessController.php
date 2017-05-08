@@ -28,9 +28,76 @@ class ProcessController extends Controller implements RouterSetupContract
      */
     static public function routerSetup(): void
     {
+        set_time_limit(3600);
+
         Route::get('/process/clan', 'ProcessController@routeClan');
         Route::get('/process/clan/members', 'ProcessController@routeClanMembers');
         Route::post('/process/member/activities', 'ProcessController@routeMemberActivities');
+        Route::post('/process/member/details', 'ProcessController@routeMemberDetails');
+    }
+
+    /**
+     * Collect and return all character IDs from account response.
+     * @param $accountResponse
+     * @return array
+     */
+    private static function collectCharacters($accountResponse): array
+    {
+        $characterIds         = [];
+        $accountCharacters    = array_pluck(array_get($accountResponse, 'Response.data.characters'), 'characterBase');
+        $accountActivityLimit = Carbon::today()->subDays(static::ACTIVITY_DAYS_LIMIT);
+
+        foreach ($accountCharacters as $accountCharacter) {
+            $accountCharacterLastPlayed = new Carbon($accountCharacter['dateLastPlayed']);
+            if ($accountCharacterLastPlayed->gt($accountActivityLimit)) {
+                $characterIds[] = $accountCharacter['characterId'];
+            }
+        }
+
+        return $characterIds;
+    }
+
+    /**
+     * Prepares the activities collection, slicing it to 25 items max.
+     * @param Collection $charactersActivities Last player activities.
+     * @return Collection
+     */
+    private static function prepareActivitiesCollection($charactersActivities): Collection
+    {
+        $charactersActivities = $charactersActivities->map(function ($characterActivity) {
+            $characterActivity['carbonPeriod'] = new Carbon($characterActivity['period']);
+
+            return $characterActivity;
+        });
+
+        // Excludes very old periods.
+        $accountActivityLimit = Carbon::today()->subDays(static::ACTIVITY_DAYS_LIMIT);
+
+        /** @var Collection $charactersActivities */
+        $charactersActivities = $charactersActivities->filter(function ($characterActivity) use ($accountActivityLimit) {
+            /** @var Carbon $carbonPeriod */
+            $carbonPeriod = $characterActivity['carbonPeriod'];
+
+            return $carbonPeriod->gte($accountActivityLimit);
+        });
+
+        // Excludes activities with less than 2 minutes of duration.
+        $charactersActivities = $charactersActivities->reject(function ($characterActivity) {
+            return array_get($characterActivity, 'values.activityDurationSeconds.basic.value') < 120;
+        });
+
+        // Order by period.
+        $charactersActivities = $charactersActivities->sortByDesc(function ($characterActivity) {
+            /** @var Carbon $carbonPeriod */
+            $carbonPeriod = $characterActivity['carbonPeriod'];
+
+            return $carbonPeriod->getTimestamp();
+        });
+
+        // Select only most recent periods.
+        $charactersActivities = $charactersActivities->slice(0, static::ACTIVITY_COUNT_LIMIT);
+
+        return $charactersActivities;
     }
 
     /**
@@ -185,8 +252,6 @@ class ProcessController extends Controller implements RouterSetupContract
      */
     public function routeMemberActivities(): array
     {
-        set_time_limit(3600);
-
         $membershipId = array_get($_POST, 'membershipId');
 
         if (!$membershipId) {
@@ -199,14 +264,15 @@ class ProcessController extends Controller implements RouterSetupContract
             return QueryPool::generateError('Internal:MemberIdsIsEmpty');
         }
 
-        $accountResponseQuery = QueryPool::unique(sprintf('/Destiny/1/Account/%u/', $membershipId), 8);
-        $accountResponse      = [
+        $accountResponse = [
             'general'  => [ 'score' => 0 ],
             'clan'     => [ 'score' => 0 ],
             'raid'     => [ 'score' => 0 ],
             'crucible' => [ 'score' => 0 ],
             'osiris'   => [ 'score' => 0 ],
         ];
+
+        $accountResponseQuery = QueryPool::unique(sprintf('/Destiny/1/Account/%u/', $membershipId), 8);
 
         if (array_has($accountResponseQuery, 'data.code')) {
             if ($accountResponseQuery['data']['code'] === 'UserCannotResolveCentralAccount') {
@@ -217,44 +283,41 @@ class ProcessController extends Controller implements RouterSetupContract
         }
 
         /** @var array $accountCharactersRaw */
-        $accountCharacters = array_pluck(array_get($accountResponseQuery, 'Response.data.characters'), 'characterBase');
-
-        // Collect character IDs.
-        $characterIds         = [];
-        $accountActivityLimit = Carbon::today()->subDays(static::ACTIVITY_DAYS_LIMIT);
-
-        foreach ($accountCharacters as $accountCharacter) {
-            $accountCharacterLastPlayed = new Carbon($accountCharacter['dateLastPlayed']);
-            if ($accountCharacterLastPlayed->gt($accountActivityLimit)) {
-                $characterIds[] = $accountCharacter['characterId'];
-            }
-        }
+        $characterIds = static::collectCharacters($accountResponseQuery);
 
         if (!$characterIds) {
             return QueryPool::generateResult($accountResponse);
         }
 
         $carbonNow = Carbon::now();
+
+        /** @var array[] $gameModes */
         $gameModes = [
-            'general'  => [ 'mode' => 0, 'withClan' => false ],
-            'clan'     => [ 'mode' => 0, 'withClan' => true ],
-            'raid'     => [ 'mode' => 4, 'withClan' => true ],
-            'crucible' => [ 'mode' => 5, 'withClan' => true ],
-            'osiris'   => [ 'mode' => 14, 'withClan' => true ],
+            'general'  => [ 'mode' => [ 0 ], 'withClan' => false ],
+            'clan'     => [ 'mode' => [ 2, 6, 18, 20 ], 'withClan' => true ],
+            'raid'     => [ 'mode' => [ 4 ], 'withClan' => true ],
+            'crucible' => [ 'mode' => [ 5 ], 'withClan' => true ],
+            'osiris'   => [ 'mode' => [ 14 ], 'withClan' => true ],
         ];
 
         // Check each game mode for character.
         foreach ($gameModes as $gameModeKey => $gameMode) {
-            $gameModeQuery = sprintf('/Destiny/Stats/ActivityHistory/1/%u/%%u/?mode=%u&count=%u', $membershipId, $gameMode['mode'], static::ACTIVITY_COUNT_LIMIT * 3);
+            $gameModeQuery = sprintf('/Destiny/Stats/ActivityHistory/1/%u/%%u/?mode=%%u&count=%u&definitions=true',
+                $membershipId, static::ACTIVITY_COUNT_LIMIT * 3);
 
             $charactersQueryPool  = new QueryPool;
             $charactersActivities = new Collection;
 
-            foreach ($characterIds as $characterId) {
-                $characterQuery = sprintf($gameModeQuery, $characterId);
-                $charactersQueryPool->addQuery($characterQuery, 8, function ($response) use (&$charactersActivities) {
-                    $charactersActivities = $charactersActivities->merge(array_get($response, 'Response.data.activities'));
-                });
+            /** @var int[] $gameModeTypes */
+            $gameModeTypes = $gameMode['mode'];
+
+            foreach ($gameModeTypes as $gameModeType) {
+                foreach ($characterIds as $characterId) {
+                    $characterQuery = sprintf($gameModeQuery, $characterId, $gameModeType);
+                    $charactersQueryPool->addQuery($characterQuery, 8, function ($response) use (&$charactersActivities) {
+                        $charactersActivities = $charactersActivities->merge(array_get($response, 'Response.data.activities'));
+                    });
+                }
             }
 
             if (!$charactersQueryPool->process()) {
@@ -267,31 +330,7 @@ class ProcessController extends Controller implements RouterSetupContract
                 continue;
             }
 
-            // Creates the Carbon period.
-            $charactersActivities = $charactersActivities->map(function ($characterActivity) {
-                $characterActivity['carbonPeriod'] = new Carbon($characterActivity['period']);
-
-                return $characterActivity;
-            });
-
-            // Excludes very old periods.
-            $charactersActivities = $charactersActivities->filter(function ($characterActivity) use ($accountActivityLimit) {
-                /** @var Carbon $carbonPeriod */
-                $carbonPeriod = $characterActivity['carbonPeriod'];
-
-                return $carbonPeriod->gte($accountActivityLimit);
-            });
-
-            // Order by period.
-            $charactersActivities = $charactersActivities->sortByDesc(function ($characterActivity) {
-                /** @var Carbon $carbonPeriod */
-                $carbonPeriod = $characterActivity['carbonPeriod'];
-
-                return $carbonPeriod->getTimestamp();
-            });
-
-            // Select only most recent periods.
-            $charactersActivities = $charactersActivities->slice(0, static::ACTIVITY_COUNT_LIMIT);
+            $charactersActivities = static::prepareActivitiesCollection($charactersActivities);
 
             // In general, calculate the activity quality.
             if ($gameMode['withClan'] === false) {
@@ -309,22 +348,46 @@ class ProcessController extends Controller implements RouterSetupContract
             $gameActivityQueryPool = new QueryPool;
 
             foreach ($charactersActivities as $charactersActivity) {
+                $activityMode    = array_get($charactersActivity, 'activityDetails.mode');
+                $activityPlayers = in_array($activityMode, [ 2, 5 ], true) ? 6 : 3;
+
                 $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
                 $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
-                    function ($characterActivity) use (&$gameModeScore, $carbonNow, $memberIds, $membershipId) {
-                        $activityEntries = array_get($characterActivity, 'Response.data.entries');
-                        $activityEntries = array_filter($activityEntries, function ($activityEntry) use ($membershipId) {
-                            return array_get($activityEntry, 'player.destinyUserInfo.membershipId') !== $membershipId &&
-                                   array_get($activityEntry, 'values.kills.basic.value') >= 5 &&
-                                   array_get($activityEntry, 'values.activityDurationSeconds.basic.value') >= 60;
+                    function ($characterActivity) use ($gameModeKey, &$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode, $activityPlayers) {
+                        /** @var Collection $activityEntries */
+                        $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
+                            return array_get($activityEntry, 'values.kills.basic.value');
+                        })->unique(function ($activityEntry) {
+                            return array_get($activityEntry, 'player.destinyUserInfo.membershipId');
                         });
 
-                        if (!$activityEntries) {
-                            return;
+                        $activityEntriesCount = 0;
+
+                        foreach ($activityEntries as $activityEntry) {
+                            if (!array_get($activityEntry, 'values.kills.basic.value')) {
+                                if (!in_array($activityMode, [ 4, 16 ], true)) {
+                                    continue;
+                                }
+
+                                $activityEntriesCount++;
+                                continue;
+                            }
+
+                            if (in_array(array_get($activityEntry, 'player.destinyUserInfo.membershipId'), $memberIds, true)) {
+                                $activityEntriesCount++;
+                                continue;
+                            }
+
+                            if (in_array($activityMode, [ 4, 16 ], true)) {
+                                $activityEntriesCount++;
+                            }
                         }
 
-                        $activityEntryFromClan = array_filter($activityEntries, function ($activityEntry) use ($memberIds) {
-                            return in_array(array_get($activityEntry, 'player.destinyUserInfo.membershipId'), $memberIds, true);
+                        $activityEntryFromClan = (new Collection($activityEntries))->filter(function ($activityEntry) use ($memberIds, $membershipId) {
+                            $entryMembershipId = array_get($activityEntry, 'player.destinyUserInfo.membershipId');
+
+                            return $entryMembershipId !== $membershipId &&
+                                   in_array($entryMembershipId, $memberIds, true);
                         });
 
                         /** @var Carbon $periodCarbon */
@@ -332,8 +395,8 @@ class ProcessController extends Controller implements RouterSetupContract
                         $periodDiff   = $periodCarbon->diffInDays($carbonNow);
                         $periodDelta  = (8 - floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)) / 8;
 
-                        $gameModeScore += (count($activityEntryFromClan) / count($activityEntries) * 70) +
-                                          ($periodDelta * 30);
+                        $gameModeScore += (count($activityEntryFromClan) / max($activityPlayers - 1, $activityEntriesCount - 1) * 80) +
+                                          ($periodDelta * 20);
                     });
             }
 
@@ -345,5 +408,176 @@ class ProcessController extends Controller implements RouterSetupContract
         }
 
         return QueryPool::generateResult($accountResponse);
+    }
+
+    /**
+     * Collect all details about a member.
+     * @return array
+     */
+    public function routeMemberDetails(): array
+    {
+        $membershipId = array_get($_POST, 'membershipId');
+
+        if (!$membershipId) {
+            return QueryPool::generateError('Internal:MembershipIdIsEmpty');
+        }
+
+        $memberIds = (array) array_get($_POST, 'memberIds');
+
+        if (!$memberIds) {
+            return QueryPool::generateError('Internal:MemberIdsIsEmpty');
+        }
+
+        $gameMode = array_get($_POST, 'gameMode');
+
+        if (!$gameMode) {
+            return QueryPool::generateError('Internal:GameModeIsEmpty');
+        }
+
+        /** @var array[] $gameModes */
+        $gameModes = [
+            'clan'     => [ 2, 6, 18, 20 ],
+            'raid'     => [ 4 ],
+            'crucible' => [ 5 ],
+            'osiris'   => [ 14 ],
+        ];
+
+        $accountResponseQuery = QueryPool::unique(sprintf('/Destiny/1/Account/%u/', $membershipId), 8);
+
+        if (array_has($accountResponseQuery, 'data.code')) {
+            if ($accountResponseQuery['data']['code'] === 'UserCannotResolveCentralAccount') {
+                return QueryPool::generateResult([]);
+            }
+
+            return $accountResponseQuery;
+        }
+
+        $charactersActivities = new Collection;
+        $activitiesTypes      = new Collection;
+
+        foreach ($gameModes[$gameMode] as $gameModeType) {
+            $gameModeQuery = sprintf('/Destiny/Stats/ActivityHistory/1/%u/%%u/?mode=%u&count=%u&definitions=true',
+                $membershipId, $gameModeType, static::ACTIVITY_COUNT_LIMIT * 3);
+
+            $charactersQueryPool = new QueryPool;
+
+            foreach (static::collectCharacters($accountResponseQuery) as $characterId) {
+                $characterQuery = sprintf($gameModeQuery, $characterId);
+                $charactersQueryPool->addQuery($characterQuery, 8, function ($response) use (&$charactersActivities, &$activitiesTypes) {
+                    $charactersActivities = $charactersActivities->merge(array_get($response, 'Response.data.activities'));
+                    $activitiesTypes      = $activitiesTypes->merge(array_get($response, 'Response.definitions.activities'));
+                });
+            }
+
+            if (!$charactersQueryPool->process()) {
+                return $charactersQueryPool->getLastError();
+            }
+        }
+
+        $activitiesTypes = $activitiesTypes->keyBy('activityHash');
+
+        /** @var Collection $charactersActivities */
+        // Ignore if no activity.
+        if (!$charactersActivities->count()) {
+            return QueryPool::generateResult([]);
+        }
+
+        // Prepare the activities collection.
+        $charactersActivities = static::prepareActivitiesCollection($charactersActivities);
+
+        $carbonNow = Carbon::now();
+
+        $gameActivityResponse  = [];
+        $gameActivityQueryPool = new QueryPool;
+
+        foreach ($charactersActivities as $charactersActivity) {
+            $activityMode    = array_get($charactersActivity, 'activityDetails.mode');
+            $activityPlayers = in_array($activityMode, [ 2, 5 ], true) ? 6 : 3;
+
+            $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
+            $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
+                function ($characterActivity) use ($activityPlayers, &$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
+                    /** @var Collection $activityEntries */
+                    $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
+                    $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
+                        return array_get($activityEntry, 'values.kills.basic.value');
+                    })->unique(function ($activityEntry) {
+                        return array_get($activityEntry, 'player.destinyUserInfo.membershipId');
+                    });
+
+                    $activityEntriesCount = 0;
+
+                    foreach ($activityEntries as $activityEntry) {
+                        $playerDisplayName = array_get($activityEntry, 'player.destinyUserInfo.displayName');
+
+                        if (array_get($activityEntry, 'player.destinyUserInfo.membershipId') === $membershipId) {
+                            $players[] = [ 'type' => 'you', 'displayName' => $playerDisplayName ];
+                            continue;
+                        }
+
+                        if (!array_get($activityEntry, 'values.kills.basic.value')) {
+                            if (!in_array($activityMode, [ 4, 16 ], true)) {
+                                continue;
+                            }
+
+                            $activityEntriesCount++;
+                            $players[] = [ 'type' => 'unconsidered', 'displayName' => $playerDisplayName ];
+                            continue;
+                        }
+
+                        if (in_array(array_get($activityEntry, 'player.destinyUserInfo.membershipId'), $memberIds, true)) {
+                            $activityEntriesCount++;
+                            $players[] = [ 'type' => 'ally', 'displayName' => $playerDisplayName ];
+                            continue;
+                        }
+
+                        if (in_array($activityMode, [ 4, 16 ], true)) {
+                            $activityEntriesCount++;
+                            $players[] = [ 'type' => 'external', 'displayName' => $playerDisplayName ];
+                        }
+                    }
+
+                    $activityEntryFromClan = (new Collection($activityEntries))->filter(function ($activityEntry) use ($memberIds, $membershipId) {
+                        $entryMembershipId = array_get($activityEntry, 'player.destinyUserInfo.membershipId');
+
+                        return $entryMembershipId !== $membershipId &&
+                               in_array($entryMembershipId, $memberIds, true);
+                    });
+
+                    /** @var Carbon $periodCarbon */
+                    $periodCarbon = new Carbon(array_get($characterActivity, 'Response.data.period'));
+                    $periodDiff   = $periodCarbon->diffInDays($carbonNow);
+                    $periodDelta  = (8 - floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)) / 8;
+
+                    $sortingTypes = [];
+                    $sortingNames = [];
+                    asort($players);
+
+                    foreach ($players as $playerKey => $player) {
+                        $sortingTypes[$playerKey] = array_search($player['type'], [ 'you', 'ally', 'external', 'unconsidered' ], true);
+                        $sortingNames[$playerKey] = $player['displayName'];
+                    }
+
+                    array_multisort(
+                        $sortingTypes, SORT_ASC,
+                        $sortingNames, SORT_NATURAL,
+                        $players
+                    );
+
+                    $gameActivityResponse[] = [
+                        'period'             => array_get($characterActivity, 'Response.data.period'),
+                        'title'              => array_get($activityType, 'activityName'),
+                        'players'            => (new Collection($players))->unique('displayName')->values()->toArray(),
+                        'scoreEntranglement' => $activityEntryFromClan->count() / max($activityPlayers - 1, $activityEntriesCount) * 80,
+                        'scoreRecentivity'   => $periodDelta * 20,
+                    ];
+                });
+        }
+
+        if (!$gameActivityQueryPool->process()) {
+            return $gameActivityQueryPool->getLastError();
+        }
+
+        return QueryPool::generateResult($gameActivityResponse);
     }
 }

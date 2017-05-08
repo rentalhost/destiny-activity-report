@@ -3,37 +3,12 @@
         margin-top: -15px;
     }
 
-    thead tr.clan th {
-        background-color: #F9F9F9;
-        font-size: 1.25em;
-        padding: 7px 10px;
-
-        strong {
-            font-weight: 500;
-        }
-
-        em {
-            font-weight: 300;
-            float: right;
-            color: #AAAAAA;
-        }
-
-        i.loading {
-            color: #4E61A7;
-            float: right;
-            margin-right: 10px;
-        }
-
+    thead tr.details th {
         i.primary, i.all { color: #4E61A7; }
         i.ally { color: #C52424; }
     }
 
     thead tr.header th {
-        background-color: #F9F9F9;
-        border-bottom: 2px #E8E8E8 solid;
-        font-size: 0.8em;
-        font-weight: 500;
-
         &:not(:first-child) {
             text-align: right;
         }
@@ -61,32 +36,8 @@
     tbody .founder { color: #F75200; }
     tbody .administrator { color: #F78B00; }
 
-    tbody tr.hoverable:hover {
-        background-color: #FFFFDA;
-    }
-
     tbody tr.loading {
         background-color: #FAFCFF;
-    }
-
-    tbody tr.noMembers {
-        background-color: #FFF6F6;
-        color: #E60000;
-        text-align: center;
-
-        > td {
-            padding: 12px 0 10px;
-            font-size: 0.8em;
-            font-weight: 500;
-        }
-    }
-
-    tbody tr:first-child td {
-        border-top: 2px white solid;
-    }
-
-    tbody tr:last-child td {
-        border-bottom: 2px white solid;
     }
 
     tbody td.activity {
@@ -100,6 +51,15 @@
         > .low { color: #F33912; }
         > .veryLow { color: #B3290C; }
         > .noData { color: silver; font-weight: normal; }
+
+        .moreInfo {
+            color: silver;
+            cursor: pointer;
+
+            &:hover {
+                color: gray;
+            }
+        }
     }
 
     tbody td.index {
