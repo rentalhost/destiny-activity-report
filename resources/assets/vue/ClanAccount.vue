@@ -119,6 +119,8 @@
                 this.$data['activities']    = [];
                 this.$data['loadingStatus'] = LoadingStatus.LOADING;
 
+                setImmediate(() => $(document.body).animate({ scrollTop: $(this.$el).position().top }));
+
                 (new Promise(function (resolve) {
                     EventBus.$emit('ClanList:getMembers', resolve);
                 })).then(function (memberIds) {
