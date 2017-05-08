@@ -61,32 +61,13 @@
                     <td class="loading" v-if="member.loadingStatus === LoadingStatus.LOADING" colspan="5">
                         <i class="fa fa-spinner fa-pulse"></i>
                     </td>
-                    <td class="activity" v-for="activity in member.activities" :key="activity.membershipDisplayName"
+                    <td class="activity" v-for="(activity, activityKey) in member.activities" :key="activity.membershipDisplayName"
                         v-if="member.loadingStatus === LoadingStatus.LOADED"
                         @click="toggleDisplayMode">
-                        <div class="veryHigh" v-if="inRange(activity.score, 73.9, 100, true)" :title="scorePercentual(activity.score)">
+                        <div v-for="(gameScore, gameScoreKey) in gameScores" v-if="inRange(activity.score, gameScore.min, gameScore.max, gameScore.inclusive)"
+                            :class="gameScoreKey" :title="textMode ? scorePercentual(activity.score) : null">
                             <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
-                            <span v-if="textMode">Very High</span>
-                        </div>
-                        <div class="high" v-if="inRange(activity.score, 50.1, 73.9)" :title="scorePercentual(activity.score)">
-                            <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
-                            <span v-if="textMode">High</span>
-                        </div>
-                        <div class="medium" v-if="inRange(activity.score, 29.0, 50.1)" :title="scorePercentual(activity.score)">
-                            <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
-                            <span v-if="textMode">Medium</span>
-                        </div>
-                        <div class="low" v-if="inRange(activity.score, 11.3, 29.0)" :title="scorePercentual(activity.score)">
-                            <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
-                            <span v-if="textMode">Low</span>
-                        </div>
-                        <div class="veryLow" v-if="inRange(activity.score, 0.1, 11.3)" :title="scorePercentual(activity.score)">
-                            <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
-                            <span v-if="textMode">Very Low</span>
-                        </div>
-                        <div class="noData" v-if="inRange(activity.score,0, 0.1)">
-                            <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
-                            <span v-if="textMode">No data</span>
+                            <span v-if="textMode" v-text="gameScore.text"></span>
                         </div>
                     </td>
                 </tr>
@@ -110,6 +91,14 @@
     const ClanList = {
         data(){
             return {
+                gameScores: {
+                    veryHigh: { inclusive: true, min: 73.9, max: 100, details: true, text: 'Very High' },
+                    high: { inclusive: false, min: 50.1, max: 73.9, details: true, text: 'High' },
+                    medium: { inclusive: false, min: 29.0, max: 50.1, details: true, text: 'Medium' },
+                    low: { inclusive: false, min: 11.3, max: 29.0, details: true, text: 'Low' },
+                    veryLow: { inclusive: false, min: 0.1, max: 11.3, details: true, text: 'Very Low' },
+                    noData: { inclusive: false, min: 0, max: 0.1, details: true, text: 'No Data' }
+                },
                 clans: {},
                 clanNames: {},
                 ordering: 'raid',
