@@ -73,6 +73,14 @@
         }
     }
 
+    tbody .displayName {
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
     tbody td.loading {
         color: #4C4C6B;
         text-align: center;

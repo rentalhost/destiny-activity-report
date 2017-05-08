@@ -49,10 +49,14 @@
                 </tr>
             </tbody>
             <tbody v-if="!clan.loading && clan.hasMembers">
-                <tr class="hoverable" v-for="member in clan.members" :class="{ loading: member.loadingStatus === LoadingStatus.LOADING }">
+                <tr class="hoverable" v-for="member in clan.members"
+                    :data-membership-id="member.membershipId"
+                    :class="{ loading: member.loadingStatus === LoadingStatus.LOADING }">
                     <td class="index">{{ getIndex(member) + 1 }}</td>
                     <td :colspan="member.loadingStatus === LoadingStatus.IDLE ? 7 : 1">
-                        <span v-text="member.membershipDisplayName"></span>
+                        <span class="displayName"
+                            v-text="member.membershipDisplayName"
+                            @click="forceLoadMember($event, member)"></span>
                         <i class="fa fa-fw fa-user founder" v-if="member.isFounder"
                             :title="`Clan founder and administrator of &quot;${getClanName(member.clanId)}&quot;.`"></i>
                         <i class="fa fa-fw fa-key administrator" v-if="member.isAdmin && !member.isFounder"
@@ -170,6 +174,14 @@
             updateOrdering(){
                 _.each(this.$data['clans'], (clanDetails) => clanDetails['members'] = this.sortMembers(clanDetails['members']));
             },
+            forceLoadMember(ev, member){
+                const membershipId = member.membershipId;
+
+                member.forceLoading = true;
+                this.updateOrdering();
+
+                setImmediate(() => $(document.body).animate({ scrollTop: $(`tr[data-membership-id="${membershipId}"]`).position().top - 30 }));
+            },
             sortMembers(membersToSort){
                 const ordering = this.$data['ordering'];
 
@@ -179,6 +191,8 @@
                     return clanMember['isAdmin'];
                 }, 'desc').orderBy(function (clanMember) {
                     return clanMember['isFounder'];
+                }, 'desc').orderBy(function (clanMember) {
+                    return clanMember['forceLoading'];
                 }, 'desc').orderBy(function (clanMember) {
                     return clanMember['loadingStatus'] === LoadingStatus.LOADING;
                 }, 'desc').orderBy(function (clanMember) {
@@ -224,6 +238,7 @@
                     return $.extend(clanMember, {
                         clanId: clanId,
                         loadingStatus: LoadingStatus.IDLE,
+                        forceLoading: false,
                         activities: {}
                     });
                 }), function (clanMember) {
