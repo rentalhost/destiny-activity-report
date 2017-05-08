@@ -190,6 +190,8 @@
                 }, 'desc').orderBy(function (clanMember) {
                     return clanMember['isFounder'];
                 }, 'desc').orderBy(function (clanMember) {
+                    return clanMember['loadingStatus'] === LoadingStatus.LOADING;
+                }, 'desc').orderBy(function (clanMember) {
                     return !_.isEmpty(clanMember['activities'])
                         ? clanMember['activities'][ordering]['score']
                         : -Infinity;
