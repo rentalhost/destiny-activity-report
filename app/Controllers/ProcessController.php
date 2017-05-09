@@ -407,7 +407,7 @@ class ProcessController extends Controller implements RouterSetupContract
 
                         /** @var Carbon $periodCarbon */
                         $periodCarbon = new Carbon(array_get($characterActivity, 'Response.data.period'));
-                        $periodDiff   = $periodCarbon->diffInDays($carbonNow);
+                        $periodDiff   = min(static::ACTIVITY_DAYS_LIMIT - 1, $periodCarbon->diffInDays($carbonNow));
                         $periodDelta  = static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
 
                         $gameModeScore += (count($activityEntryFromClan) / max($activityPlayers - 1, $activityEntriesCount - 1) * static::POINTS_ENTANGLEMENT) +
@@ -561,7 +561,7 @@ class ProcessController extends Controller implements RouterSetupContract
 
                     /** @var Carbon $periodCarbon */
                     $periodCarbon = new Carbon(array_get($characterActivity, 'Response.data.period'));
-                    $periodDiff   = $periodCarbon->diffInDays($carbonNow);
+                    $periodDiff   = min(static::ACTIVITY_DAYS_LIMIT - 1, $periodCarbon->diffInDays($carbonNow));
                     $periodDelta  = static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
 
                     $sortingTypes = [];
