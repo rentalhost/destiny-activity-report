@@ -24,6 +24,16 @@ class ProcessController extends Controller implements RouterSetupContract
     const ACTIVITY_DAYS_LIMIT = 60;
 
     /**
+     * Score limit on entranglement.
+     */
+    const  POINTS_ENTRANGLEMENT = 50;
+
+    /**
+     * Score limit on recentivity.
+     */
+    const  POINTS_RECENTIVITY = 50;
+
+    /**
      * Defines all controller routes.
      */
     static public function routerSetup(): void
@@ -395,8 +405,8 @@ class ProcessController extends Controller implements RouterSetupContract
                         $periodDiff   = $periodCarbon->diffInDays($carbonNow);
                         $periodDelta  = (8 - floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)) / 8;
 
-                        $gameModeScore += (count($activityEntryFromClan) / max($activityPlayers - 1, $activityEntriesCount - 1) * 80) +
-                                          ($periodDelta * 20);
+                        $gameModeScore += (count($activityEntryFromClan) / max($activityPlayers - 1, $activityEntriesCount - 1) * static::POINTS_ENTRANGLEMENT) +
+                                          ($periodDelta * static::POINTS_RECENTIVITY);
                     });
             }
 
@@ -568,8 +578,8 @@ class ProcessController extends Controller implements RouterSetupContract
                         'period'             => array_get($characterActivity, 'Response.data.period'),
                         'title'              => array_get($activityType, 'activityName'),
                         'players'            => (new Collection($players))->unique('displayName')->values()->toArray(),
-                        'scoreEntranglement' => $activityEntryFromClan->count() / max($activityPlayers - 1, $activityEntriesCount) * 80,
-                        'scoreRecentivity'   => $periodDelta * 20,
+                        'scoreEntranglement' => $activityEntryFromClan->count() / max($activityPlayers - 1, $activityEntriesCount) * static::POINTS_ENTRANGLEMENT,
+                        'scoreRecentivity'   => $periodDelta * static::POINTS_RECENTIVITY,
                     ];
                 });
         }

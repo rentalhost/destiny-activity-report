@@ -31,7 +31,9 @@
                 </my-box>
             </my-boxes>
 
-            <my-clan-account></my-clan-account>
+            <my-clan-account
+                :score-entranglement="{{ $scoreEntranglement }}"
+                :score-recentivity="{{ $scoreRecentivity }}"></my-clan-account>
             <my-clan-list></my-clan-list>
 
             <p style="margin-top: 15px;">

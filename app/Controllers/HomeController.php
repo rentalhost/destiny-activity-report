@@ -24,6 +24,9 @@ class HomeController extends Controller implements RouterSetupContract
      */
     public function routeHome(): View
     {
-        return view('home.home');
+        return view('home.home', [
+            'scoreEntranglement' => ProcessController::POINTS_ENTRANGLEMENT,
+            'scoreRecentivity'   => ProcessController::POINTS_RECENTIVITY,
+        ]);
     }
 }

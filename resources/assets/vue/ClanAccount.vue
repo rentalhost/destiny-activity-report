@@ -42,8 +42,8 @@
                         :class="getPlayerClassname(player)"
                         :title="getPlayerTitle(player)"></i>
                 </td>
-                <td data-max="80" v-text="activity.scoreEntranglement.toFixed(2)"></td>
-                <td data-max="20" v-text="activity.scoreRecentivity.toFixed(2)"></td>
+                <td :data-max="scoreEntranglement" v-text="activity.scoreEntranglement.toFixed(2)"></td>
+                <td :data-max="scoreRecentivity" v-text="activity.scoreRecentivity.toFixed(2)"></td>
                 <td data-max="100" v-text="(activity.scoreEntranglement + activity.scoreRecentivity).toFixed(2)"></td>
             </tr>
         </tbody>
@@ -81,6 +81,10 @@
     };
 
     export default {
+        props: {
+            scoreEntranglement: Number,
+            scoreRecentivity: Number,
+        },
         data(){
             return {
                 LoadingStatus: LoadingStatus,
