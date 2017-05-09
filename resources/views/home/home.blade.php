@@ -32,7 +32,7 @@
             </my-boxes>
 
             <my-clan-account
-                :score-entranglement="{{ $scoreEntranglement }}"
+                :score-entanglement="{{ $scoreEntanglement }}"
                 :score-recentivity="{{ $scoreRecentivity }}"></my-clan-account>
             <my-clan-list></my-clan-list>
 

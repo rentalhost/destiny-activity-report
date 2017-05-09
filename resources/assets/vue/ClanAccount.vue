@@ -42,17 +42,17 @@
                         :class="getPlayerClassname(player)"
                         :title="getPlayerTitle(player)"></i>
                 </td>
-                <td :data-max="scoreEntranglement" v-text="activity.scoreEntranglement.toFixed(2)"></td>
+                <td :data-max="scoreEntanglement" v-text="activity.scoreEntanglement.toFixed(2)"></td>
                 <td :data-max="scoreRecentivity" v-text="activity.scoreRecentivity.toFixed(2)"></td>
-                <td data-max="100" v-text="(activity.scoreEntranglement + activity.scoreRecentivity).toFixed(2)"></td>
+                <td data-max="100" v-text="(activity.scoreEntanglement + activity.scoreRecentivity).toFixed(2)"></td>
             </tr>
         </tbody>
         <tfoot v-if="activities.length">
             <tr>
-                <td class="total" colspan="3">Total of <strong v-text="(sum('scoreEntranglement', 'scoreRecentivity') / 25).toFixed(2) + '%'"></strong></td>
-                <td data-max="2000" v-text="sum('scoreEntranglement').toFixed(2)"></td>
+                <td class="total" colspan="3">Total of <strong v-text="(sum('scoreEntanglement', 'scoreRecentivity') / 25).toFixed(2) + '%'"></strong></td>
+                <td data-max="2000" v-text="sum('scoreEntanglement').toFixed(2)"></td>
                 <td data-max="500" v-text="sum('scoreRecentivity').toFixed(2)"></td>
-                <td data-max="2500" v-text="sum('scoreEntranglement', 'scoreRecentivity').toFixed(2)"></td>
+                <td data-max="2500" v-text="sum('scoreEntanglement', 'scoreRecentivity').toFixed(2)"></td>
             </tr>
         </tfoot>
     </table>
@@ -82,7 +82,7 @@
 
     export default {
         props: {
-            scoreEntranglement: Number,
+            scoreEntanglement: Number,
             scoreRecentivity: Number,
         },
         data(){
