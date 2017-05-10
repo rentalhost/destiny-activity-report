@@ -59,7 +59,7 @@
                     <td :colspan="member.loadingStatus === LoadingStatus.IDLE ? 7 : 1">
                         <span class="displayName"
                             v-text="member.membershipDisplayName"
-                            @click="forceLoadMember($event, member)"></span>
+                            @click="forceLoadMember(member)"></span>
                         <i class="fa fa-fw fa-user founder" v-if="member.isFounder"
                             :title="`Clan founder and administrator of &quot;${member.clan.clanName}&quot;.`"></i>
                         <i class="fa fa-fw fa-key administrator" v-if="member.isAdmin && !member.isFounder"
@@ -178,7 +178,7 @@
             updateOrdering(){
                 _.each(this.$data['clans'], (clanDetails) => clanDetails['members'] = this.sortMembers(clanDetails['members']));
             },
-            forceLoadMember(ev, member){
+            forceLoadMember(member){
                 const membershipId = member.membershipId;
 
                 member.forceLoading = true;
