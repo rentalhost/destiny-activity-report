@@ -6,6 +6,12 @@
     thead tr.details th {
         i.primary, i.all { color: #4E61A7; }
         i.ally { color: #C52424; }
+
+        .name {
+            cursor: pointer;
+
+            &:hover { text-decoration: underline; }
+        }
     }
 
     thead tr.header th {
@@ -57,6 +63,13 @@
         font-size: 0.8em;
 
         > div { font-weight: 500; }
+
+        .score {
+            cursor: pointer;
+
+            &:hover { text-decoration: underline; }
+        }
+
         > .veryHigh { color: #458E00; }
         > .high { color: #51C000; }
         > .medium { color: #F19200; }

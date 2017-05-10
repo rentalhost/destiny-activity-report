@@ -20,7 +20,7 @@
                             <i class="fa fa-fw fa-star-o ally" title="Ally clan." v-if="!clan.isPrimary"></i>
                         </slot>
                         <i class="fa fa-fw fa-globe all" title="All members of the clans together." v-if="groupByAll"></i>
-                        <strong @click="toggleGroupMode">{{ clan.clanName }}</strong>
+                        <strong class="name" @click="toggleGroupMode">{{ clan.clanName }}</strong>
                     </th>
                 </tr>
                 <tr class="header" v-if="!clan.loading && clan.hasMembers">
@@ -73,8 +73,8 @@
                         @click="toggleDisplayMode">
                         <div v-for="(gameScore, gameScoreKey) in gameScores" v-if="inRange(activity.score, gameScore.min, gameScore.max, gameScore.inclusive)"
                             :class="gameScoreKey" :title="textMode ? scoreActivity(activity.score) : null">
-                            <span v-if="!textMode" v-text="scoreActivity(activity.score, true)"></span>
-                            <span v-if="textMode" v-text="gameScore.text"></span>
+                            <span class="score" v-if="!textMode" v-text="scoreActivity(activity.score, true)"></span>
+                            <span class="score" v-if="textMode" v-text="gameScore.text"></span>
                             <i v-if="gameScore.details && activityKey !== 'general'"
                                 class="fa fa-fw fa-info-circle moreInfo" title="Click to see all details."
                                 @click.stop="getAccountDetails(member, activityKey)"></i>
