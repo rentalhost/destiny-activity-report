@@ -73,6 +73,36 @@ class ProcessController extends Controller implements RouterSetupContract
     }
 
     /**
+     * Return the game mode settings.
+     * @return array[][]
+     */
+    private static function getGameModes(): array
+    {
+        return [
+            'general'  => [
+                'modes'    => [ 0 ],
+                'withClan' => false,
+            ],
+            'clan'     => [
+                'modes'    => [ 2, 6, 18, 20 ],
+                'withClan' => true,
+            ],
+            'raid'     => [
+                'modes'    => [ 4 ],
+                'withClan' => true,
+            ],
+            'crucible' => [
+                'modes'    => [ 5 ],
+                'withClan' => true,
+            ],
+            'osiris'   => [
+                'modes'    => [ 14 ],
+                'withClan' => true,
+            ],
+        ];
+    }
+
+    /**
      * Prepares the activities collection, slicing it to 25 items max.
      * @param Collection $charactersActivities Last player activities.
      * @return Collection
@@ -305,15 +335,7 @@ class ProcessController extends Controller implements RouterSetupContract
         }
 
         $carbonNow = Carbon::now();
-
-        /** @var array[] $gameModes */
-        $gameModes = [
-            'general'  => [ 'mode' => [ 0 ], 'withClan' => false ],
-            'clan'     => [ 'mode' => [ 2, 6, 18, 20 ], 'withClan' => true ],
-            'raid'     => [ 'mode' => [ 4 ], 'withClan' => true ],
-            'crucible' => [ 'mode' => [ 5 ], 'withClan' => true ],
-            'osiris'   => [ 'mode' => [ 14 ], 'withClan' => true ],
-        ];
+        $gameModes = static::getGameModes();
 
         // Check each game mode for character.
         foreach ($gameModes as $gameModeKey => $gameMode) {
@@ -324,7 +346,7 @@ class ProcessController extends Controller implements RouterSetupContract
             $charactersActivities = new Collection;
 
             /** @var int[] $gameModeTypes */
-            $gameModeTypes = $gameMode['mode'];
+            $gameModeTypes = $gameMode['modes'];
 
             foreach ($gameModeTypes as $gameModeType) {
                 foreach ($characterIds as $characterId) {
@@ -368,7 +390,7 @@ class ProcessController extends Controller implements RouterSetupContract
 
                 $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
                 $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
-                    function ($characterActivity) use ($gameModeKey, &$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode, $activityPlayers) {
+                    function ($characterActivity) use (&$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode, $activityPlayers) {
                         /** @var Collection $activityEntries */
                         $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
                             return array_get($activityEntry, 'values.kills.basic.value');
@@ -449,13 +471,7 @@ class ProcessController extends Controller implements RouterSetupContract
             return QueryPool::generateError('Internal:GameModeIsEmpty');
         }
 
-        /** @var array[] $gameModes */
-        $gameModes = [
-            'clan'     => [ 2, 6, 18, 20 ],
-            'raid'     => [ 4 ],
-            'crucible' => [ 5 ],
-            'osiris'   => [ 14 ],
-        ];
+        $gameModes = static::getGameModes();
 
         $accountResponseQuery = QueryPool::unique(sprintf('/Destiny/1/Account/%u/', $membershipId), 8);
 
@@ -470,7 +486,7 @@ class ProcessController extends Controller implements RouterSetupContract
         $charactersActivities = new Collection;
         $activitiesTypes      = new Collection;
 
-        foreach ($gameModes[$gameMode] as $gameModeType) {
+        foreach ($gameModes[$gameMode]['modes'] as $gameModeType) {
             $gameModeQuery = sprintf('/Destiny/Stats/ActivityHistory/1/%u/%%u/?mode=%u&count=%u&definitions=true',
                 $membershipId, $gameModeType, static::ACTIVITY_COUNT_LIMIT * 3);
 
