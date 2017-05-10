@@ -49,7 +49,7 @@
                 </tr>
             </thead>
             <tbody v-if="!clan.loading && !clan.hasMembers">
-                <tr class="none">
+                <tr class="none" colspan="8">
                     <td>No members on this clan.</td>
                 </tr>
             </tbody>

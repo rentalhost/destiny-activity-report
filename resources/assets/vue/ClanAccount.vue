@@ -28,7 +28,7 @@
             </tr>
         </thead>
         <tbody v-if="!activities.length && loadingStatus === LoadingStatus.LOADED">
-            <tr class="none">
+            <tr class="none" colspan="6">
                 <td>No activitities from this player.</td>
             </tr>
         </tbody>
