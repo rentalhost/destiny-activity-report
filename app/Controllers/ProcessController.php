@@ -47,7 +47,7 @@ class ProcessController extends Controller implements RouterSetupContract
     /**
      * Score addition specific for each part of recentivity.
      */
-    private const RECENTIVITY_DISTRIBUTION = [ 1.0, 0.9, 0.6, 0.4, 0.2, 0.1, 0.1, 0.1 ];
+    private const RECENTIVITY_DISTRIBUTION = [ 1.0, 0.9, 0.6, 0.4, 0.2, 0.1, 0.1, 0.1, 0.0 ];
 
     /**
      * Defines all controller routes.
@@ -618,10 +618,6 @@ class ProcessController extends Controller implements RouterSetupContract
                             $activityEntriesCount++;
                             $players[] = [ 'type' => 'external', 'displayName' => $playerDisplayName ];
                         }
-                    }
-
-                    if (count($players) === 4) {
-                        dd($players, $teams);
                     }
 
                     $activityEntryFromClan = (new Collection($activityEntries))->filter(function ($activityEntry) use ($memberIds, $membershipId) {
