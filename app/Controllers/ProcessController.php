@@ -416,7 +416,23 @@ class ProcessController extends Controller implements RouterSetupContract
 
                         $activityEntriesCount = 0;
 
+                        $teams    = array_get($characterActivity, 'Response.data.teams');
+                        $teamYour = null;
+
+                        if ($teams) {
+                            foreach ($activityEntries as $activityEntry) {
+                                if (array_get($activityEntry, 'player.destinyUserInfo.membershipId') === $membershipId) {
+                                    $teamYour = array_get($activityEntry, 'values.team.basic.value');
+                                    break;
+                                }
+                            }
+                        }
+
                         foreach ($activityEntries as $activityEntry) {
+                            if ($teamYour && array_get($activityEntry, 'values.team.basic.value') !== $teamYour) {
+                                continue;
+                            }
+
                             if (!array_get($activityEntry, 'values.kills.basic.value')) {
                                 if (!in_array($activityMode, [ 4, 16 ], true)) {
                                     continue;
@@ -542,11 +558,11 @@ class ProcessController extends Controller implements RouterSetupContract
         $gameActivityQueryPool = new QueryPool;
 
         foreach ($charactersActivities as $charactersActivity) {
-            $activityMode    = array_get($charactersActivity, 'activityDetails.mode');
+            $activityMode = array_get($charactersActivity, 'activityDetails.mode');
 
             $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
             $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
-                function ($characterActivity) use ( &$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
+                function ($characterActivity) use (&$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
                     /** @var Collection $activityEntries */
                     $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
                     $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
@@ -555,9 +571,26 @@ class ProcessController extends Controller implements RouterSetupContract
                         return array_get($activityEntry, 'player.destinyUserInfo.membershipId');
                     });
 
+                    $players              = [];
                     $activityEntriesCount = 0;
 
+                    $teams    = array_get($characterActivity, 'Response.data.teams');
+                    $teamYour = null;
+
+                    if ($teams) {
+                        foreach ($activityEntries as $activityEntry) {
+                            if (array_get($activityEntry, 'player.destinyUserInfo.membershipId') === $membershipId) {
+                                $teamYour = array_get($activityEntry, 'values.team.basic.value');
+                                break;
+                            }
+                        }
+                    }
+
                     foreach ($activityEntries as $activityEntry) {
+                        if ($teamYour && array_get($activityEntry, 'values.team.basic.value') !== $teamYour) {
+                            continue;
+                        }
+
                         $playerDisplayName = array_get($activityEntry, 'player.destinyUserInfo.displayName');
 
                         if (array_get($activityEntry, 'player.destinyUserInfo.membershipId') === $membershipId) {
@@ -585,6 +618,10 @@ class ProcessController extends Controller implements RouterSetupContract
                             $activityEntriesCount++;
                             $players[] = [ 'type' => 'external', 'displayName' => $playerDisplayName ];
                         }
+                    }
+
+                    if (count($players) === 4) {
+                        dd($players, $teams);
                     }
 
                     $activityEntryFromClan = (new Collection($activityEntries))->filter(function ($activityEntry) use ($memberIds, $membershipId) {
