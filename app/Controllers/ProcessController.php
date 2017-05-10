@@ -16,12 +16,12 @@ class ProcessController extends Controller implements RouterSetupContract
     /**
      * Number of activities to consider.
      */
-    const ACTIVITY_COUNT_LIMIT = 25;
+    private const ACTIVITY_COUNT_LIMIT = 25;
 
     /**
      * Number of days to consider as a valid activity.
      */
-    const ACTIVITY_DAYS_LIMIT = 60;
+    private const ACTIVITY_DAYS_LIMIT = 60;
 
     /**
      * Score limit on entanglement.
@@ -32,6 +32,11 @@ class ProcessController extends Controller implements RouterSetupContract
      * Score limit on recentivity.
      */
     const  POINTS_RECENTIVITY = 50;
+
+    /**
+     * Score addition specific for each part of recentivity.
+     */
+    private const RECENTIVITY_DISTRIBUTION = [ 1.0, 0.9, 0.6, 0.4, 0.2, 0.1, 0.1, 0.1 ];
 
     /**
      * Defines all controller routes.
@@ -349,7 +354,7 @@ class ProcessController extends Controller implements RouterSetupContract
                         $carbonPeriod = $characterActivity['carbonPeriod'];
                         $periodDiff   = $carbonPeriod->diffInDays($carbonNow);
 
-                        return (8 - floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)) / 8;
+                        return static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
                     })->sum() / static::ACTIVITY_COUNT_LIMIT * 100;
                 continue;
             }
@@ -403,7 +408,7 @@ class ProcessController extends Controller implements RouterSetupContract
                         /** @var Carbon $periodCarbon */
                         $periodCarbon = new Carbon(array_get($characterActivity, 'Response.data.period'));
                         $periodDiff   = $periodCarbon->diffInDays($carbonNow);
-                        $periodDelta  = (8 - floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)) / 8;
+                        $periodDelta  = static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
 
                         $gameModeScore += (count($activityEntryFromClan) / max($activityPlayers - 1, $activityEntriesCount - 1) * static::POINTS_ENTANGLEMENT) +
                                           ($periodDelta * static::POINTS_RECENTIVITY);
@@ -557,7 +562,7 @@ class ProcessController extends Controller implements RouterSetupContract
                     /** @var Carbon $periodCarbon */
                     $periodCarbon = new Carbon(array_get($characterActivity, 'Response.data.period'));
                     $periodDiff   = $periodCarbon->diffInDays($carbonNow);
-                    $periodDelta  = (8 - floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)) / 8;
+                    $periodDelta  = static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
 
                     $sortingTypes = [];
                     $sortingNames = [];
