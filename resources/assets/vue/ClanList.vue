@@ -61,9 +61,9 @@
                             v-text="member.membershipDisplayName"
                             @click="forceLoadMember($event, member)"></span>
                         <i class="fa fa-fw fa-user founder" v-if="member.isFounder"
-                            :title="`Clan founder and administrator of &quot;${getClanName(member.clanId)}&quot;.`"></i>
+                            :title="`Clan founder and administrator of &quot;${member.clan.clanName}&quot;.`"></i>
                         <i class="fa fa-fw fa-key administrator" v-if="member.isAdmin && !member.isFounder"
-                            :title="`Clan administrator of &quot;${getClanName(member.clanId)}&quot;.`"></i>
+                            :title="`Clan administrator of &quot;${member.clan.clanName}&quot;.`"></i>
                     </td>
                     <td class="loading" v-if="member.loadingStatus === LoadingStatus.LOADING" colspan="5">
                         <i class="fa fa-spinner fa-pulse"></i>
@@ -108,7 +108,6 @@
                     noData: { inclusive: false, min: 0, max: 1, details: true, text: 'No Data' }
                 },
                 clans: {},
-                clanNames: {},
                 ordering: 'default',
                 textMode: true,
                 groupByAll: false,
@@ -161,15 +160,12 @@
                 this.updateOrdering();
             },
             getIndex(member){
-                const clanId = this.getClanId(member.clanId);
+                const clanId = this.getClanId(member.clan.clanId);
 
                 return _.indexOf(_.keys(this.$data['clans'][clanId]['members']), member.membershipId);
             },
             getClanId(clanId){
                 return this.$data['groupByAll'] ? 'all' : clanId;
-            },
-            getClanName(clanId){
-                return this.$data['clanNames'][clanId];
             },
             getNextMember(){
                 return _.find(this.getMembers(), function (clanMember) {
@@ -246,11 +242,12 @@
                 return members;
             },
             setMembers(clanId, clanMembers){
-                const clanIdNow = this.getClanId(clanId);
+                const clanIdNow = this.getClanId(clanId),
+                      clan      = this.$data['clans'][clanId];
 
                 Vue.set(this.$data['clans'][clanIdNow], 'members', _.mapKeys(_.map(clanMembers, function (clanMember) {
                     return $.extend(clanMember, {
-                        clanId: clanId,
+                        clan: clan,
                         loadingStatus: LoadingStatus.IDLE,
                         forceLoading: false,
                         activities: {}
