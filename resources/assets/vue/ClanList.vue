@@ -100,11 +100,11 @@
             return {
                 LoadingStatus: LoadingStatus,
                 gameScores: {
-                    veryHigh: { inclusive: true, min: 7390, max: 10000, details: true, text: 'Very High' },
-                    high: { inclusive: false, min: 5010, max: 7390, details: true, text: 'High' },
-                    medium: { inclusive: false, min: 2900, max: 5010, details: true, text: 'Medium' },
-                    low: { inclusive: false, min: 1130, max: 2900, details: true, text: 'Low' },
-                    veryLow: { inclusive: false, min: 1, max: 1130, details: true, text: 'Very Low' },
+                    veryHigh: { inclusive: true, min: 8000, max: 10000, details: true, text: 'Very High' },
+                    high: { inclusive: false, min: 5000, max: 8000, details: true, text: 'High' },
+                    medium: { inclusive: false, min: 3000, max: 5000, details: true, text: 'Medium' },
+                    low: { inclusive: false, min: 1000, max: 3000, details: true, text: 'Low' },
+                    veryLow: { inclusive: false, min: 1, max: 1000, details: true, text: 'Very Low' },
                     noData: { inclusive: false, min: 0, max: 1, details: true, text: 'No Data' }
                 },
                 clans: {},
