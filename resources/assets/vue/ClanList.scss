@@ -19,6 +19,10 @@
             text-align: right;
         }
 
+        &.index {
+            text-align: center;
+        }
+
         &.sortable {
             cursor: pointer;
 
@@ -87,7 +91,7 @@
         }
     }
 
-    tbody td.index {
+    tbody td.ranking {
         text-align: right;
         font-weight: bold;
         font-size: 0.8em;
@@ -96,6 +100,14 @@
             content: 'º';
             margin-left: 2px;
         }
+    }
+
+    tbody td.index {
+        text-align: center;
+        letter-spacing: -0.3em;
+        font-family: Courier New;
+        font-size: 0.8em;
+        color: silver;
     }
 
     tbody .displayName {

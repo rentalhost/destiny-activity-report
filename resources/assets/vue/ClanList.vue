@@ -4,6 +4,7 @@
             <colgroup>
                 <col width="7.5%" />
                 <col />
+                <col width="5%" />
                 <col width="12.5%" />
                 <col width="12.5%" />
                 <col width="12.5%" />
@@ -12,7 +13,7 @@
             </colgroup>
             <thead>
                 <tr class="details">
-                    <th colspan="7">
+                    <th colspan="8">
                         <em v-if="clan.clanId">#{{ clan.clanId }}</em>
                         <i class="fa fa-fw fa-spinner fa-pulse loading" v-if="clan.loading"></i>
                         <slot v-if="!groupByAll">
@@ -29,6 +30,7 @@
                         :class="{ active: ordering === 'default' }"
                         @click="setOrdering($event, 'default')">Gamertag
                     </th>
+                    <th class="index" title="Clan index, based on input order.">Clan</th>
                     <th class="sortable" title="Activities independent of clan."
                         :class="{ active: ordering === 'general' }"
                         @click="setOrdering($event, 'general')"><span>General</span></th>
@@ -55,8 +57,8 @@
                 <tr class="hoverable" v-for="member in clan.members"
                     :data-membership-id="member.membershipId"
                     :class="{ loading: member.loadingStatus === LoadingStatus.LOADING }">
-                    <td class="index">{{ getIndex(member) + 1 }}</td>
-                    <td :colspan="member.loadingStatus === LoadingStatus.IDLE ? 7 : 1">
+                    <td class="ranking">{{ getIndex(member) + 1 }}</td>
+                    <td>
                         <span class="displayName"
                             v-text="member.membershipDisplayName"
                             @click="forceLoadMember(member)"></span>
@@ -65,7 +67,10 @@
                         <i class="fa fa-fw fa-key administrator" v-if="member.isAdmin && !member.isFounder"
                             :title="`Clan administrator of &quot;${member.clan.clanName}&quot;.`"></i>
                     </td>
-                    <td class="loading" v-if="member.loadingStatus === LoadingStatus.LOADING" colspan="5">
+                    <td class="index" v-text="romanize(member.clan.clanIndex)"
+                        :title="`Member of &quot;${member.clan.clanName}&quot;`"></td>
+                    <td v-if="member.loadingStatus === LoadingStatus.IDLE" colspan="6"></td>
+                    <td class="loading" v-if="member.loadingStatus === LoadingStatus.LOADING" colspan="6">
                         <i class="fa fa-spinner fa-pulse"></i>
                     </td>
                     <td class="activity" v-for="(activity, activityKey) in member.activities" :key="activity.membershipDisplayName"
@@ -112,6 +117,7 @@
                 textMode: true,
                 groupByAll: false,
                 clansOriginal: null,
+                clanIndex: 0,
             };
         },
         data(){
@@ -121,6 +127,7 @@
             inRange: function (value, start, end, inclusive) {
                 return value >= start && (inclusive ? value <= end : value < end);
             },
+            romanize: Format.romanize,
             scoreActivity(score, onlyPercent){
                 return (onlyPercent !== true ? 'Activity: ' : '') + Format.thousands(score);
             },
@@ -222,8 +229,10 @@
                 _.assignIn(this.$data, ClanList.initialData());
             },
             createClan(clanId, clanName, isPrimary) {
-                this.$data['clanNames'][clanId] = clanName;
+                const clanIndex = ++this.$data['clanIndex'];
+
                 Vue.set(this.$data['clans'], clanId, {
+                    clanIndex: clanIndex,
                     clanId: clanId,
                     clanName: clanName,
                     isPrimary: isPrimary,
