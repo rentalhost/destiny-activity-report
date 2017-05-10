@@ -161,14 +161,14 @@ const Process = {
                 }
 
                 EventBus.$emit('Message:push', memberActivityMessage.replace('%s', clanMember['membershipDisplayName']), { temporary: true, loading: true });
-                EventBus.$emit('ClanList:setMemberLoading', clanMember.clanId, clanMember.membershipId);
+                EventBus.$emit('ClanList:setMemberLoading', clanMember.clan.clanId, clanMember.membershipId);
 
                 return $.post('/process/member/activities', { membershipId: clanMember.membershipId, memberIds: memberIds }).then(function (response) {
                     if (Process.checkError(response)) {
                         return false;
                     }
 
-                    EventBus.$emit('ClanList:setMemberActivities', clanMember.clanId, clanMember.membershipId, response.data, true);
+                    EventBus.$emit('ClanList:setMemberActivities', clanMember.clan.clanId, clanMember.membershipId, response.data, true);
 
                     return nextPromise();
                 });
