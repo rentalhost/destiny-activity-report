@@ -96,7 +96,7 @@
     import Query from '../modules/Query';
 
     const ClanList = {
-        data(){
+        initialData() {
             return {
                 LoadingStatus: LoadingStatus,
                 gameScores: {
@@ -114,6 +114,9 @@
                 groupByAll: false,
                 clansOriginal: null,
             };
+        },
+        data(){
+            return ClanList.initialData();
         },
         methods: {
             inRange: function (value, start, end, inclusive) {
@@ -220,7 +223,7 @@
                 this.updateOrdering();
             },
             clear() {
-                this.$data['clans'] = {};
+                _.assignIn(this.$data, ClanList.initialData());
             },
             createClan(clanId, clanName, isPrimary) {
                 this.$data['clanNames'][clanId] = clanName;
