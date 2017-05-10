@@ -24,6 +24,17 @@ class ProcessController extends Controller implements RouterSetupContract
     private const ACTIVITY_DAYS_LIMIT = 60;
 
     /**
+     * Score addition specific for party size.
+     */
+    private const PARTY_DISTRIBUTION = [
+        0  => [ 0.00 ],
+        1  => [ 1.00, 0.00 ],
+        2  => [ 1.00, 0.80, 0.00 ],
+        5  => [ 1.00, 0.90, 0.70, 0.50, 0.20, 0.00 ],
+        11 => [ 1.00, 0.95, 0.90, 0.85, 0.80, 0.75, 0.60, 0.50, 0.40, 0.20, 0.10, 0.00 ],
+    ];
+
+    /**
      * Score limit on entanglement.
      */
     const  POINTS_ENTANGLEMENT = 200;
@@ -345,14 +356,17 @@ class ProcessController extends Controller implements RouterSetupContract
             $charactersQueryPool  = new QueryPool;
             $charactersActivities = new Collection;
 
+            $activitiesTypes = new Collection;
+
             /** @var int[] $gameModeTypes */
             $gameModeTypes = $gameMode['modes'];
 
             foreach ($gameModeTypes as $gameModeType) {
                 foreach ($characterIds as $characterId) {
                     $characterQuery = sprintf($gameModeQuery, $characterId, $gameModeType);
-                    $charactersQueryPool->addQuery($characterQuery, 8, function ($response) use (&$charactersActivities) {
+                    $charactersQueryPool->addQuery($characterQuery, 8, function ($response) use (&$activitiesTypes, &$charactersActivities) {
                         $charactersActivities = $charactersActivities->merge(array_get($response, 'Response.data.activities'));
+                        $activitiesTypes      = $activitiesTypes->merge(array_get($response, 'Response.definitions.activities'));
                     });
                 }
             }
@@ -381,17 +395,19 @@ class ProcessController extends Controller implements RouterSetupContract
                 continue;
             }
 
+            $activitiesTypes = $activitiesTypes->keyBy('activityHash');
+
             $gameModeScore         = 0;
             $gameActivityQueryPool = new QueryPool;
 
             foreach ($charactersActivities as $charactersActivity) {
-                $activityMode    = array_get($charactersActivity, 'activityDetails.mode');
-                $activityPlayers = in_array($activityMode, [ 2, 5 ], true) ? 6 : 3;
+                $activityMode = array_get($charactersActivity, 'activityDetails.mode');
 
                 $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
                 $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
-                    function ($characterActivity) use (&$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode, $activityPlayers) {
+                    function ($characterActivity) use ($activitiesTypes, &$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode) {
                         /** @var Collection $activityEntries */
+                        $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
                         $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
                             return array_get($activityEntry, 'values.kills.basic.value');
                         })->unique(function ($activityEntry) {
@@ -432,7 +448,11 @@ class ProcessController extends Controller implements RouterSetupContract
                         $periodDiff   = min(static::ACTIVITY_DAYS_LIMIT - 1, $periodCarbon->diffInDays($carbonNow));
                         $periodDelta  = static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
 
-                        $gameModeScore += (count($activityEntryFromClan) / max($activityPlayers - 1, $activityEntriesCount - 1) * static::POINTS_ENTANGLEMENT) +
+                        $partyAllies       = array_get($activityType, 'maxParty') - 1;
+                        $partyDistribution = static::PARTY_DISTRIBUTION[$partyAllies];
+                        $partyCurrent      = $partyDistribution[max(0, $partyAllies - $activityEntryFromClan->count())];
+
+                        $gameModeScore += ($partyCurrent * static::POINTS_ENTANGLEMENT) +
                                           ($periodDelta * static::POINTS_RECENTIVITY);
                     });
             }
@@ -523,11 +543,10 @@ class ProcessController extends Controller implements RouterSetupContract
 
         foreach ($charactersActivities as $charactersActivity) {
             $activityMode    = array_get($charactersActivity, 'activityDetails.mode');
-            $activityPlayers = in_array($activityMode, [ 2, 5 ], true) ? 6 : 3;
 
             $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
             $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
-                function ($characterActivity) use ($activityPlayers, &$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
+                function ($characterActivity) use ( &$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
                     /** @var Collection $activityEntries */
                     $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
                     $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
@@ -595,11 +614,15 @@ class ProcessController extends Controller implements RouterSetupContract
                         $players
                     );
 
+                    $partyAllies       = array_get($activityType, 'maxParty') - 1;
+                    $partyDistribution = static::PARTY_DISTRIBUTION[$partyAllies];
+                    $partyCurrent      = $partyDistribution[max(0, $partyAllies - $activityEntryFromClan->count())];
+
                     $gameActivityResponse[] = [
                         'period'            => array_get($characterActivity, 'Response.data.period'),
                         'title'             => array_get($activityType, 'activityName'),
                         'players'           => (new Collection($players))->unique('displayName')->values()->toArray(),
-                        'scoreEntanglement' => round($activityEntryFromClan->count() / max($activityPlayers - 1, $activityEntriesCount) * static::POINTS_ENTANGLEMENT),
+                        'scoreEntanglement' => round($partyCurrent * static::POINTS_ENTANGLEMENT),
                         'scoreRecentivity'  => round($periodDelta * static::POINTS_RECENTIVITY),
                     ];
                 });
