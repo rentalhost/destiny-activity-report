@@ -4,11 +4,11 @@
             <colgroup>
                 <col width="7.5%" />
                 <col />
-                <col width="15%" />
-                <col width="15%" />
-                <col width="15%" />
-                <col width="15%" />
-                <col width="15%" />
+                <col width="12.5%" />
+                <col width="12.5%" />
+                <col width="12.5%" />
+                <col width="12.5%" />
+                <col width="12.5%" />
             </colgroup>
             <thead>
                 <tr class="details">
@@ -72,8 +72,8 @@
                         v-if="member.loadingStatus === LoadingStatus.LOADED"
                         @click="toggleDisplayMode">
                         <div v-for="(gameScore, gameScoreKey) in gameScores" v-if="inRange(activity.score, gameScore.min, gameScore.max, gameScore.inclusive)"
-                            :class="gameScoreKey" :title="textMode ? scorePercentual(activity.score) : null">
-                            <span v-if="!textMode" v-text="scorePercentual(activity.score, true)"></span>
+                            :class="gameScoreKey" :title="textMode ? scoreActivity(activity.score) : null">
+                            <span v-if="!textMode" v-text="scoreActivity(activity.score, true)"></span>
                             <span v-if="textMode" v-text="gameScore.text"></span>
                             <i v-if="gameScore.details && activityKey !== 'general'"
                                 class="fa fa-fw fa-info-circle moreInfo" title="Click to see all details."
@@ -88,6 +88,7 @@
 
 <script>
     import EventBus from '../modules/EventBus';
+    import Format from '../modules/Format';
     import _ from 'lodash';
     import $ from 'jquery';
     import Vue from 'vue';
@@ -99,12 +100,12 @@
             return {
                 LoadingStatus: LoadingStatus,
                 gameScores: {
-                    veryHigh: { inclusive: true, min: 73.9, max: 100, details: true, text: 'Very High' },
-                    high: { inclusive: false, min: 50.1, max: 73.9, details: true, text: 'High' },
-                    medium: { inclusive: false, min: 29.0, max: 50.1, details: true, text: 'Medium' },
-                    low: { inclusive: false, min: 11.3, max: 29.0, details: true, text: 'Low' },
-                    veryLow: { inclusive: false, min: 0.1, max: 11.3, details: true, text: 'Very Low' },
-                    noData: { inclusive: false, min: 0, max: 0.1, details: true, text: 'No Data' }
+                    veryHigh: { inclusive: true, min: 7390, max: 10000, details: true, text: 'Very High' },
+                    high: { inclusive: false, min: 5010, max: 7390, details: true, text: 'High' },
+                    medium: { inclusive: false, min: 2900, max: 5010, details: true, text: 'Medium' },
+                    low: { inclusive: false, min: 1130, max: 2900, details: true, text: 'Low' },
+                    veryLow: { inclusive: false, min: 1, max: 1130, details: true, text: 'Very Low' },
+                    noData: { inclusive: false, min: 0, max: 1, details: true, text: 'No Data' }
                 },
                 clans: {},
                 clanNames: {},
@@ -118,8 +119,8 @@
             inRange: function (value, start, end, inclusive) {
                 return value >= start && (inclusive ? value <= end : value < end);
             },
-            scorePercentual(score, onlyPercent){
-                return (onlyPercent !== true ? 'Activity: ' : '') + score.toFixed(2) + '%';
+            scoreActivity(score, onlyPercent){
+                return (onlyPercent !== true ? 'Activity: ' : '') + Format.thousands(score);
             },
             toggleDisplayMode(){
                 this.$data['textMode'] = !this.$data['textMode'];

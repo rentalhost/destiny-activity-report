@@ -42,17 +42,17 @@
                         :class="getPlayerClassname(player)"
                         :title="getPlayerTitle(player)"></i>
                 </td>
-                <td :data-max="scoreEntanglement" v-text="activity.scoreEntanglement.toFixed(2)"></td>
-                <td :data-max="scoreRecentivity" v-text="activity.scoreRecentivity.toFixed(2)"></td>
-                <td data-max="100" v-text="(activity.scoreEntanglement + activity.scoreRecentivity).toFixed(2)"></td>
+                <td :data-max="scoreEntanglement" v-text="localeNumber(activity.scoreEntanglement)"></td>
+                <td :data-max="scoreRecentivity" v-text="localeNumber(activity.scoreRecentivity)"></td>
+                <td data-max="400" v-text="localeNumber(activity.scoreEntanglement + activity.scoreRecentivity)"></td>
             </tr>
         </tbody>
         <tfoot v-if="activities.length">
             <tr>
-                <td class="total" colspan="3">Total of <strong v-text="(sum('scoreEntanglement', 'scoreRecentivity') / 25).toFixed(2) + '%'"></strong></td>
-                <td data-max="2000" v-text="sum('scoreEntanglement').toFixed(2)"></td>
-                <td data-max="500" v-text="sum('scoreRecentivity').toFixed(2)"></td>
-                <td data-max="2500" v-text="sum('scoreEntanglement', 'scoreRecentivity').toFixed(2)"></td>
+                <td class="total" colspan="3">Total of <strong v-text="sum('scoreEntanglement', 'scoreRecentivity')"></strong></td>
+                <td data-max="5.000" v-text="sum('scoreEntanglement')"></td>
+                <td data-max="5.000" v-text="sum('scoreRecentivity')"></td>
+                <td data-max="10.000" v-text="sum('scoreEntanglement', 'scoreRecentivity')"></td>
             </tr>
         </tfoot>
     </table>
@@ -60,6 +60,7 @@
 
 <script>
     import EventBus from '../modules/EventBus';
+    import Format from '../modules/Format';
     import _ from 'lodash';
     import $ from 'jquery';
     import moment from 'moment';
@@ -95,12 +96,13 @@
             };
         },
         methods: {
+            localeNumber: Format.thousands,
             sum(...terms){
                 const activities = this.$data['activities'];
 
-                return _.reduce(terms, function (termCarry, term) {
+                return this.localeNumber(_.reduce(terms, function (termCarry, term) {
                     return termCarry + _.sumBy(activities, term);
-                }, 0);
+                }, 0));
             },
             getPeriod(period){
                 return moment(period).fromNow();

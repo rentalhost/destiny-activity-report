@@ -26,12 +26,12 @@ class ProcessController extends Controller implements RouterSetupContract
     /**
      * Score limit on entanglement.
      */
-    const  POINTS_ENTANGLEMENT = 50;
+    const  POINTS_ENTANGLEMENT = 200;
 
     /**
      * Score limit on recentivity.
      */
-    const  POINTS_RECENTIVITY = 50;
+    const  POINTS_RECENTIVITY = 200;
 
     /**
      * Score addition specific for each part of recentivity.
@@ -349,13 +349,13 @@ class ProcessController extends Controller implements RouterSetupContract
 
             // In general, calculate the activity quality.
             if ($gameMode['withClan'] === false) {
-                $accountResponse[$gameModeKey]['score'] = $charactersActivities->map(function ($characterActivity) use ($carbonNow) {
+                $accountResponse[$gameModeKey]['score'] = round($charactersActivities->map(function ($characterActivity) use ($carbonNow) {
                         /** @var Carbon $carbonPeriod */
                         $carbonPeriod = $characterActivity['carbonPeriod'];
                         $periodDiff   = $carbonPeriod->diffInDays($carbonNow);
 
                         return static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
-                    })->sum() / static::ACTIVITY_COUNT_LIMIT * 100;
+                    })->sum() * 400);
                 continue;
             }
 
@@ -419,7 +419,7 @@ class ProcessController extends Controller implements RouterSetupContract
                 return $gameActivityQueryPool->getLastError();
             }
 
-            $accountResponse[$gameModeKey]['score'] = $gameModeScore / static::ACTIVITY_COUNT_LIMIT;
+            $accountResponse[$gameModeKey]['score'] = round($gameModeScore);
         }
 
         return QueryPool::generateResult($accountResponse);
@@ -583,8 +583,8 @@ class ProcessController extends Controller implements RouterSetupContract
                         'period'            => array_get($characterActivity, 'Response.data.period'),
                         'title'             => array_get($activityType, 'activityName'),
                         'players'           => (new Collection($players))->unique('displayName')->values()->toArray(),
-                        'scoreEntanglement' => $activityEntryFromClan->count() / max($activityPlayers - 1, $activityEntriesCount) * static::POINTS_ENTANGLEMENT,
-                        'scoreRecentivity'  => $periodDelta * static::POINTS_RECENTIVITY,
+                        'scoreEntanglement' => round($activityEntryFromClan->count() / max($activityPlayers - 1, $activityEntriesCount) * static::POINTS_ENTANGLEMENT),
+                        'scoreRecentivity'  => round($periodDelta * static::POINTS_RECENTIVITY),
                     ];
                 });
         }
