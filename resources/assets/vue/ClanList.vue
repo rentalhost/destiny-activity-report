@@ -105,7 +105,7 @@
             return {
                 LoadingStatus: LoadingStatus,
                 gameScores: {
-                    veryHigh: { inclusive: true, min: 8000, max: 10000, details: true, text: 'Very High' },
+                    veryHigh: { inclusive: true, min: 8000, max: 12000, details: true, text: 'Very High' },
                     high: { inclusive: false, min: 5000, max: 8000, details: true, text: 'High' },
                     medium: { inclusive: false, min: 3000, max: 5000, details: true, text: 'Medium' },
                     low: { inclusive: false, min: 1000, max: 3000, details: true, text: 'Low' },

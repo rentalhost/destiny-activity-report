@@ -37,12 +37,12 @@ class ProcessController extends Controller implements RouterSetupContract
     /**
      * Score limit on entanglement.
      */
-    const  POINTS_ENTANGLEMENT = 200;
+    const  POINTS_ENTANGLEMENT = 360;
 
     /**
      * Score limit on recentivity.
      */
-    const  POINTS_RECENTIVITY = 200;
+    const  POINTS_RECENTIVITY = 120;
 
     /**
      * Score addition specific for each part of recentivity.
@@ -391,7 +391,7 @@ class ProcessController extends Controller implements RouterSetupContract
                         $periodDiff   = $carbonPeriod->diffInDays($carbonNow);
 
                         return static::RECENTIVITY_DISTRIBUTION[(int) floor($periodDiff * 8 / static::ACTIVITY_DAYS_LIMIT)];
-                    })->sum() * 400);
+                    })->sum() * 480);
                 continue;
             }
 
@@ -541,6 +541,7 @@ class ProcessController extends Controller implements RouterSetupContract
             }
         }
 
+        /** @var Collection $activitiesTypes */
         $activitiesTypes = $activitiesTypes->keyBy('activityHash');
 
         /** @var Collection $charactersActivities */

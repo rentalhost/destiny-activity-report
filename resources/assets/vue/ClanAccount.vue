@@ -44,15 +44,15 @@
                 </td>
                 <td :data-max="scoreEntanglement" v-text="localeNumber(activity.scoreEntanglement)"></td>
                 <td :data-max="scoreRecentivity" v-text="localeNumber(activity.scoreRecentivity)"></td>
-                <td data-max="400" v-text="localeNumber(activity.scoreEntanglement + activity.scoreRecentivity)"></td>
+                <td data-max="480" v-text="localeNumber(activity.scoreEntanglement + activity.scoreRecentivity)"></td>
             </tr>
         </tbody>
         <tfoot v-if="activities.length">
             <tr>
                 <td class="total" colspan="3">Total of <strong v-text="sum('scoreEntanglement', 'scoreRecentivity')"></strong></td>
-                <td data-max="5.000" v-text="sum('scoreEntanglement')"></td>
-                <td data-max="5.000" v-text="sum('scoreRecentivity')"></td>
-                <td data-max="10.000" v-text="sum('scoreEntanglement', 'scoreRecentivity')"></td>
+                <td data-max="9.000" v-text="sum('scoreEntanglement')"></td>
+                <td data-max="3.000" v-text="sum('scoreRecentivity')"></td>
+                <td data-max="12.000" v-text="sum('scoreEntanglement', 'scoreRecentivity')"></td>
             </tr>
         </tfoot>
     </table>
