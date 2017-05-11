@@ -170,7 +170,7 @@ class ProcessController extends Controller implements RouterSetupContract
         }
 
         if (!is_numeric($clanIdentifier)) {
-            $clanIdentifierResponse = QueryPool::unique(sprintf('/Group/Name/%s/', $clanIdentifier), 720);
+            $clanIdentifierResponse = QueryPool::unique(sprintf('/Group/Name/%s/', $clanIdentifier), 1440);
 
             if (array_has($clanIdentifierResponse, 'data.code')) {
                 return $clanIdentifierResponse;
@@ -179,7 +179,7 @@ class ProcessController extends Controller implements RouterSetupContract
             $clanId = (int) array_get($clanIdentifierResponse, 'Response.detail.groupId');
         }
 
-        $clanResponse = QueryPool::unique(sprintf('/Group/%u/', $clanId), 720);
+        $clanResponse = QueryPool::unique(sprintf('/Group/%u/', $clanId), 1440);
 
         if (array_has($clanResponse, 'data.code')) {
             return $clanResponse;
@@ -231,7 +231,7 @@ class ProcessController extends Controller implements RouterSetupContract
         foreach ($clanIds as $clanId) {
             $clansQueryPool = new QueryPool;
 
-            $clansQueryPool->addQuery(sprintf('/Group/%u/', $clanId), 720);
+            $clansQueryPool->addQuery(sprintf('/Group/%u/', $clanId), 1440);
             $clansQueryPool->addQuery(sprintf('/Group/%u/AdminsV2/?currentPage=1&platformType=1&itemsPerPage=50', $clanId), 8);
 
             $clansQueryPool->then(function ($carry, $clanResponse, $clanAdminsReponse) use ($clanId, &$results) {
@@ -404,7 +404,7 @@ class ProcessController extends Controller implements RouterSetupContract
                 $activityMode = array_get($charactersActivity, 'activityDetails.mode');
 
                 $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
-                $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
+                $gameActivityQueryPool->addQuery($lastActivityQuery, 1440,
                     function ($characterActivity) use ($activitiesTypes, &$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode) {
                         /** @var Collection $activityEntries */
                         $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
@@ -562,7 +562,7 @@ class ProcessController extends Controller implements RouterSetupContract
             $activityMode = array_get($charactersActivity, 'activityDetails.mode');
 
             $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
-            $gameActivityQueryPool->addQuery($lastActivityQuery, 720,
+            $gameActivityQueryPool->addQuery($lastActivityQuery, 1440,
                 function ($characterActivity) use (&$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
                     /** @var Collection $activityEntries */
                     $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
