@@ -81,12 +81,12 @@
         unconsidered: { classname: 'unconsidered', title: 'Unconsidered player: %s' }
     };
 
-    export default {
+    const ClanAccount = {
         props: {
             scoreEntanglement: Number,
             scoreRecentivity: Number,
         },
-        data(){
+        initialData(){
             return {
                 LoadingStatus: LoadingStatus,
                 loadingStatus: LoadingStatus.IDLE,
@@ -94,6 +94,9 @@
                 member: null,
                 activities: []
             };
+        },
+        data(){
+            return ClanAccount.initialData();
         },
         methods: {
             localeNumber: Format.thousands,
@@ -103,6 +106,9 @@
                 return this.localeNumber(_.reduce(terms, function (termCarry, term) {
                     return termCarry + _.sumBy(activities, term);
                 }, 0));
+            },
+            clear() {
+                _.assignIn(this.$data, ClanAccount.initialData());
             },
             getPeriod(period){
                 return moment(period).fromNow();
@@ -145,7 +151,10 @@
             }
         },
         mounted(){
+            EventBus.$on('Process:clear', this.clear.bind(this));
             EventBus.$on('ClanAccount:getDetails', this.getDetails.bind(this));
         }
-    }
+    };
+
+    export default ClanAccount;
 </script>
