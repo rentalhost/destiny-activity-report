@@ -77,6 +77,7 @@
     const PlayerTypes = {
         you: { classname: 'you', title: 'This is you!' },
         ally: { classname: 'ally', title: 'Ally player: %s' },
+        allyCommon: { classname: 'allyCommon', title: 'Ally player: %s (common)' },
         external: { classname: 'external', title: 'External player: %s' },
         unconsidered: { classname: 'unconsidered', title: 'Unconsidered player: %s' }
     };

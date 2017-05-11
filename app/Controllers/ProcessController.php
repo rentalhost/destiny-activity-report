@@ -400,12 +400,14 @@ class ProcessController extends Controller implements RouterSetupContract
             $gameModeScore         = 0;
             $gameActivityQueryPool = new QueryPool;
 
+            $activityAllies = [];
+
             foreach ($charactersActivities as $charactersActivity) {
                 $activityMode = array_get($charactersActivity, 'activityDetails.mode');
 
                 $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
                 $gameActivityQueryPool->addQuery($lastActivityQuery, 1440,
-                    function ($characterActivity) use ($activitiesTypes, &$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode) {
+                    function ($characterActivity) use (&$activityAllies, $activitiesTypes, &$gameModeScore, $carbonNow, $memberIds, $membershipId, $activityMode) {
                         /** @var Collection $activityEntries */
                         $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
                         $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
@@ -415,6 +417,7 @@ class ProcessController extends Controller implements RouterSetupContract
                         });
 
                         $activityEntriesCount = 0;
+                        $activityAlliesDelta  = 1;
 
                         $teams    = array_get($characterActivity, 'Response.data.teams');
                         $teamYour = null;
@@ -442,8 +445,21 @@ class ProcessController extends Controller implements RouterSetupContract
                                 continue;
                             }
 
-                            if (in_array(array_get($activityEntry, 'player.destinyUserInfo.membershipId'), $memberIds, true)) {
+                            $activityEntryMembershipId = array_get($activityEntry, 'player.destinyUserInfo.membershipId');
+                            if (in_array($activityEntryMembershipId, $memberIds, true)) {
                                 $activityEntriesCount++;
+
+                                if ($activityAlliesDelta > 0.5) {
+                                    if (!array_key_exists($activityEntryMembershipId, $activityAllies)) {
+                                        $activityAllies[$activityEntryMembershipId] = 0;
+                                    }
+
+                                    if (++$activityAllies[$activityEntryMembershipId] >= 5) {
+                                        $activityAlliesDelta -= 0.1;
+                                        continue;
+                                    }
+                                }
+
                                 continue;
                             }
 
@@ -468,7 +484,7 @@ class ProcessController extends Controller implements RouterSetupContract
                         $partyDistribution = static::PARTY_DISTRIBUTION[$partyAllies];
                         $partyCurrent      = $partyDistribution[max(0, $partyAllies - $activityEntryFromClan->count())];
 
-                        $gameModeScore += ($partyCurrent * static::POINTS_ENTANGLEMENT) +
+                        $gameModeScore += ($partyCurrent * static::POINTS_ENTANGLEMENT * $activityAlliesDelta) +
                                           ($periodDelta * static::POINTS_RECENTIVITY);
                     });
             }
@@ -558,12 +574,14 @@ class ProcessController extends Controller implements RouterSetupContract
         $gameActivityResponse  = [];
         $gameActivityQueryPool = new QueryPool;
 
+        $activityAllies = [];
+
         foreach ($charactersActivities as $charactersActivity) {
             $activityMode = array_get($charactersActivity, 'activityDetails.mode');
 
             $lastActivityQuery = sprintf('/Destiny/Stats/PostGameCarnageReport/%u/', array_get($charactersActivity, 'activityDetails.instanceId'));
             $gameActivityQueryPool->addQuery($lastActivityQuery, 1440,
-                function ($characterActivity) use (&$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
+                function ($characterActivity) use (&$activityAllies, &$gameActivityResponse, $carbonNow, $memberIds, $membershipId, $activitiesTypes, $activityMode) {
                     /** @var Collection $activityEntries */
                     $activityType    = $activitiesTypes->get(array_get($characterActivity, 'Response.data.activityDetails.referenceId'));
                     $activityEntries = (new Collection(array_get($characterActivity, 'Response.data.entries')))->sortByDesc(function ($activityEntry) {
@@ -574,6 +592,7 @@ class ProcessController extends Controller implements RouterSetupContract
 
                     $players              = [];
                     $activityEntriesCount = 0;
+                    $activityAlliesDelta  = 1;
 
                     $teams    = array_get($characterActivity, 'Response.data.teams');
                     $teamYour = null;
@@ -609,8 +628,23 @@ class ProcessController extends Controller implements RouterSetupContract
                             continue;
                         }
 
-                        if (in_array(array_get($activityEntry, 'player.destinyUserInfo.membershipId'), $memberIds, true)) {
+                        $activityEntryMembershipId = array_get($activityEntry, 'player.destinyUserInfo.membershipId');
+                        if (in_array($activityEntryMembershipId, $memberIds, true)) {
                             $activityEntriesCount++;
+
+                            if ($activityAlliesDelta > 0.5) {
+                                if (!array_key_exists($activityEntryMembershipId, $activityAllies)) {
+                                    $activityAllies[$activityEntryMembershipId] = 0;
+                                }
+
+                                if (++$activityAllies[$activityEntryMembershipId] >= 5) {
+                                    $activityAlliesDelta -= 0.1;
+
+                                    $players[] = [ 'type' => 'allyCommon', 'displayName' => $playerDisplayName ];
+                                    continue;
+                                }
+                            }
+
                             $players[] = [ 'type' => 'ally', 'displayName' => $playerDisplayName ];
                             continue;
                         }
@@ -638,7 +672,7 @@ class ProcessController extends Controller implements RouterSetupContract
                     asort($players);
 
                     foreach ($players as $playerKey => $player) {
-                        $sortingTypes[$playerKey] = array_search($player['type'], [ 'you', 'ally', 'external', 'unconsidered' ], true);
+                        $sortingTypes[$playerKey] = array_search($player['type'], [ 'you', 'ally', 'allyCommon', 'external', 'unconsidered' ], true);
                         $sortingNames[$playerKey] = $player['displayName'];
                     }
 
@@ -656,7 +690,7 @@ class ProcessController extends Controller implements RouterSetupContract
                         'period'            => array_get($characterActivity, 'Response.data.period'),
                         'title'             => array_get($activityType, 'activityName'),
                         'players'           => (new Collection($players))->unique('displayName')->values()->toArray(),
-                        'scoreEntanglement' => round($partyCurrent * static::POINTS_ENTANGLEMENT),
+                        'scoreEntanglement' => round($partyCurrent * static::POINTS_ENTANGLEMENT * $activityAlliesDelta),
                         'scoreRecentivity'  => round($periodDelta * static::POINTS_RECENTIVITY),
                     ];
                 });
