@@ -268,8 +268,8 @@
                 this.$data['clans'][clanIdNow].hasMembers = !_.isEmpty(clanMembers);
                 this.loaded(clanId);
             },
-            setMemberLoading(clanId, memberId){
-                this.$data['clans'][this.getClanId(clanId)]['members'][memberId].loadingStatus = LoadingStatus.LOADING;
+            setMemberLoading(clanId, memberId, loadingMode){
+                this.$data['clans'][this.getClanId(clanId)]['members'][memberId].loadingStatus = loadingMode !== false ? LoadingStatus.LOADING : LoadingStatus.IDLE;
             },
             setMemberActivities(clanId, memberId, memberActivities){
                 this.$data['clans'][this.getClanId(clanId)]['members'][memberId].loadingStatus = LoadingStatus.LOADED;

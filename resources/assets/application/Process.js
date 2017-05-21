@@ -171,6 +171,12 @@ const Process = {
                     EventBus.$emit('ClanList:setMemberActivities', clanMember.clan.clanId, clanMember.membershipId, response.data, true);
 
                     return nextPromise();
+                }, function () {
+                    EventBus.$emit('ClanList:setMemberLoading', clanMember.clan.clanId, clanMember.membershipId, false);
+
+                    console.error('Server connection failed... trying again...');
+
+                    return nextPromise();
                 });
             });
         };
